@@ -23,7 +23,7 @@ const client = new Client({
 
 // ================== CONFIG ==================
 
-const TOKEN = "MTQ5NzAwNTU3NjY0NTkwNjQ0Mg.G4960d.S6M0OsdbEWHAW9pXyqBTqifAxJrqdaDp8cemLo";
+const TOKEN = "";
 
 const PANEL_CHANNEL_ID = "1481879215812116571";
 const STAFF_ROLE_ID = "1481850766049153267";
