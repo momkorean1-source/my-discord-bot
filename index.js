@@ -262,5 +262,5 @@ client.on(Events.InteractionCreate, async interaction => {
     console.log(err);
   }
 });
-
+client.login(process.env.TOKEN);
 client.login(TOKEN);
