@@ -23,7 +23,6 @@ const client = new Client({
 
 // ================== CONFIG ==================
 
-const TOKEN = "";
 
 const PANEL_CHANNEL_ID = "1481879215812116571";
 const STAFF_ROLE_ID = "1481850766049153267";
@@ -263,4 +262,3 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 client.login(process.env.TOKEN);
-client.login(TOKEN);
