@@ -56,31 +56,25 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   const statsChannel = await client.channels.fetch(STATS_CHANNEL_ID).catch(() => null);
-  if (!statsChannel) return console.log("❌ Stats channel not found.");
+  if (!statsChannel) return;
 
   const guild = statsChannel.guild;
 
   await guild.members.fetch().catch(() => {});
 
-  // ================= REACTION SETUP =================
   const rrChannel = await client.channels.fetch(REACTION_ROLE_CHANNEL_ID).catch(() => null);
 
   if (rrChannel) {
     const msg = await rrChannel.messages.fetch(REACTION_ROLE_MESSAGE_ID).catch(() => null);
 
     if (msg) {
-      console.log("✅ Reaction role message found");
-
       for (const emojiId of Object.keys(reactionRoles)) {
         const exists = msg.reactions.cache.find(r => r.emoji.id === emojiId);
-        if (!exists) {
-          await msg.react(emojiId).catch(() => {});
-        }
+        if (!exists) await msg.react(emojiId).catch(() => {});
       }
     }
   }
 
-  // ================= STATS INIT =================
   const messages = await statsChannel.messages.fetch({ limit: 10 }).catch(() => null);
   statsMessage = messages?.find(m => m.author.id === client.user.id);
 
@@ -91,7 +85,8 @@ client.once(Events.ClientReady, async () => {
   setInterval(updateCustomerStats, 15000);
   updateCustomerStats();
 
-  // ================= TICKET PANEL (RESTORED) =================
+  // ================= TICKET PANEL (PRO UPGRADE) =================
+
   const panelChannel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
 
   if (panelChannel) {
@@ -103,9 +98,10 @@ client.once(Events.ClientReady, async () => {
     );
 
     const embed = new EmbedBuilder()
-      .setTitle("🛒 Purchase System")
-      .setDescription("Click the button below to open a private purchase ticket.")
-      .setColor("#a855f7");
+      .setTitle("🛒 PREMIUM PURCHASE CENTER")
+      .setDescription("Click below to open a private purchase ticket with our team.")
+      .setColor("#a855f7")
+      .setFooter({ text: "Fast support • Safe orders • 24/7" });
 
     const msgs = await panelChannel.messages.fetch({ limit: 10 }).catch(() => null);
     const exists = msgs?.find(m => m.author.id === client.user.id && m.components.length);
@@ -116,103 +112,18 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-// ================== REACTION ROLES ==================
+// ================== TICKET STORAGE ==================
+const tickets = new Map();
 
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-  if (user.bot) return;
-
-  if (reaction.partial) await reaction.fetch().catch(() => {});
-  if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
-
-  if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
-
-  const roleId = reactionRoles[reaction.emoji.id];
-  if (!roleId) return;
-
-  const member = await reaction.message.guild.members.fetch(user.id).catch(() => null);
-  if (!member) return;
-
-  await member.roles.add(roleId).catch(() => {});
-});
-
-client.on(Events.MessageReactionRemove, async (reaction, user) => {
-  if (user.bot) return;
-
-  if (reaction.partial) await reaction.fetch().catch(() => {});
-  if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
-
-  if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
-
-  const roleId = reactionRoles[reaction.emoji.id];
-  if (!roleId) return;
-
-  const member = await reaction.message.guild.members.fetch(user.id).catch(() => null);
-  if (!member) return;
-
-  await member.roles.remove(roleId).catch(() => {});
-});
-
-// ================== STATS ==================
-
-async function updateCustomerStats() {
-  try {
-    if (!statsMessage) return;
-
-    const guild = statsMessage.guild;
-
-    await guild.members.fetch().catch(() => {});
-
-    const customers = guild.members.cache.filter(m =>
-      m.roles.cache.has(CUSTOMER_ROLE_ID)
-    );
-
-    const online = customers.filter(m =>
-      m.presence && ["online", "idle", "dnd"].includes(m.presence.status)
-    ).size;
-
-    const embed = new EmbedBuilder()
-      .setTitle("🔥 LIVE CUSTOMER STATS")
-      .setDescription(
-        `👥 Total Customers: **${customers.size}**\n🟢 Online Customers: **${online}**`
-      )
-      .setColor("#a855f7")
-      .setTimestamp();
-
-    await statsMessage.edit({ embeds: [embed] }).catch(() => {});
-  } catch (e) {
-    console.log("STATS ERROR:", e);
-  }
-}
-
-// ================== WELCOME ==================
-
-client.on(Events.GuildMemberAdd, async member => {
-  await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
-
-  const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
-  if (!channel) return;
-
-  const embed = new EmbedBuilder()
-    .setTitle("👋 Welcome to the Server!")
-    .setDescription(
-      `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
-    )
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-    .setColor("#a855f7")
-    .setFooter({ text: "Enjoy your stay!" })
-    .setTimestamp();
-
-  channel.send({ embeds: [embed] });
-});
-
-// ================== INTERACTIONS (TICKETS FIXED) ==================
+// ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
 
-    // ============ BUTTONS ============
+    // ================= BUTTON =================
     if (interaction.isButton()) {
 
+      // OPEN TICKET
       if (interaction.customId === "create_ticket") {
 
         const modal = new ModalBuilder()
@@ -236,9 +147,41 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.showModal(modal);
       }
+
+      // CLAIM TICKET
+      if (interaction.customId.startsWith("claim_ticket")) {
+        const channel = interaction.channel;
+
+        await channel.setName(`claimed-${interaction.user.username}`);
+
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claimed")
+            .setLabel(`Claimed by ${interaction.user.username}`)
+            .setStyle(ButtonStyle.Success)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId("close_ticket")
+            .setLabel("Close")
+            .setStyle(ButtonStyle.Danger)
+        );
+
+        await interaction.message.edit({ components: [row] });
+
+        return interaction.reply({
+          content: "📌 Ticket claimed!",
+          ephemeral: true
+        });
+      }
+
+      // CLOSE TICKET
+      if (interaction.customId === "close_ticket") {
+        await interaction.reply("❌ Closing ticket...");
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+      }
     }
 
-    // ============ MODAL ============
+    // ================= MODAL =================
     if (interaction.isModalSubmit()) {
 
       if (interaction.customId === "purchase_modal") {
@@ -274,17 +217,29 @@ client.on(Events.InteractionCreate, async interaction => {
 
         const embed = new EmbedBuilder()
           .setTitle("🛒 New Purchase Ticket")
+          .setDescription(`👤 Opened by <@${interaction.user.id}>`)
           .addFields(
-            { name: "User", value: `<@${interaction.user.id}>` },
             { name: "Product", value: product },
             { name: "Description", value: description }
           )
           .setColor("#a855f7")
           .setTimestamp();
 
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("claim_ticket")
+            .setLabel("Claim")
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId("close_ticket")
+            .setLabel("Close")
+            .setStyle(ButtonStyle.Danger)
+        );
+
         await channel.send({
-          content: `<@&${STAFF_ROLE_ID}>`,
-          embeds: [embed]
+          content: `<@&${STAFF_ROLE_ID}> <@${interaction.user.id}>`,
+          embeds: [embed],
+          components: [row]
         });
 
         return interaction.reply({
@@ -294,63 +249,39 @@ client.on(Events.InteractionCreate, async interaction => {
       }
     }
 
-    // ============ COMMANDS ============
-    if (interaction.isChatInputCommand()) {
-
-      if (interaction.commandName === "lock") {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
-          return interaction.reply({ content: "❌ No permission", ephemeral: true });
-
-        await interaction.channel.permissionOverwrites.edit(interaction.guild.id, {
-          SendMessages: false
-        });
-
-        return interaction.reply("🔒 Locked.");
-      }
-
-      if (interaction.commandName === "kick") {
-        const user = interaction.options.getMember("user");
-        await user.kick();
-        return interaction.reply(`👢 Kicked ${user.user.tag}`);
-      }
-
-      if (interaction.commandName === "ban") {
-        const user = interaction.options.getMember("user");
-        await user.ban();
-        return interaction.reply(`⛔ Banned ${user.user.tag}`);
-      }
-
-      if (interaction.commandName === "role") {
-        const user = interaction.options.getMember("user");
-        const role = interaction.options.getRole("role");
-
-        await user.roles.add(role);
-        return interaction.reply(`✅ Gave role ${role.name}`);
-      }
-
-      if (interaction.commandName === "timeout") {
-        const user = interaction.options.getMember("user");
-        const minutes = interaction.options.getInteger("minutes");
-
-        await user.timeout(minutes * 60000);
-        return interaction.reply(`⏳ Timed out ${user.user.tag}`);
-      }
-
-      if (interaction.commandName === "untimeout") {
-        const user = interaction.options.getMember("user");
-        await user.timeout(null);
-        return interaction.reply(`✅ Removed timeout`);
-      }
-
-      if (interaction.commandName === "clear") {
-        const amount = interaction.options.getInteger("amount");
-        await interaction.channel.bulkDelete(amount, true);
-        return interaction.reply({ content: `🧹 Deleted ${amount}`, ephemeral: true });
-      }
-    }
-
   } catch (err) {
     console.log(err);
+  }
+});
+
+// ================== STATS (UNCHANGED) ==================
+
+async function updateCustomerStats() {
+  try {
+    if (!statsMessage) return;
+
+    const guild = statsMessage.guild;
+    await guild.members.fetch().catch(() => {});
+
+    const customers = guild.members.cache.filter(m =>
+      m.roles.cache.has(CUSTOMER_ROLE_ID)
+    );
+
+    const online = customers.filter(m =>
+      m.presence && ["online", "idle", "dnd"].includes(m.presence.status)
+    ).size;
+
+    const embed = new EmbedBuilder()
+      .setTitle("🔥 LIVE CUSTOMER STATS")
+      .setDescription(
+        `👥 Total Customers: **${customers.size}**\n🟢 Online Customers: **${online}**`
+      )
+      .setColor("#a855f7")
+      .setTimestamp();
+
+    await statsMessage.edit({ embeds: [embed] }).catch(() => {});
+  } catch (e) {
+    console.log(e);
   }
 });
 
