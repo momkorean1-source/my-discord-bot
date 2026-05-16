@@ -17,12 +17,13 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildPresences // ⚠️ MUST be enabled in Developer Portal
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
   ]
 });
 
 // ================== CONFIG ==================
-
 
 const PANEL_CHANNEL_ID = "1481879215812116571";
 const STAFF_ROLE_ID = "1481850766049153267";
@@ -39,26 +40,23 @@ let statsMessage;
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  // Fetch stats channel and guild
   const statsChannel = await client.channels.fetch(STATS_CHANNEL_ID).catch(() => null);
   if (!statsChannel) return console.log("❌ Stats channel not found.");
 
   const guild = statsChannel.guild;
 
-  // IMPORTANT: Only fetch members ONCE on startup to populate cache.
-  // This avoids the Opcode 8 Rate Limit error.
   console.log("⏳ Fetching member cache...");
-  await guild.members.fetch({ withPresences: true }).catch(e => console.log("Fetch error:", e));
+  await guild.members.fetch({ withPresences: true }).catch(() => {});
   console.log("✅ Member cache ready.");
 
-  // ================== TICKET PANEL ==================
-
+  // PANEL
   const panelChannel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+
   if (panelChannel) {
     const messages = await panelChannel.messages.fetch({ limit: 10 });
-    const existingPanel = messages.find(m => m.author.id === client.user.id && m.components.length);
+    const existing = messages.find(m => m.author.id === client.user.id && m.components.length);
 
-    if (!existingPanel) {
+    if (!existing) {
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("create_ticket")
@@ -75,8 +73,7 @@ client.once(Events.ClientReady, async () => {
     }
   }
 
-  // ================== STATS MESSAGE INITIALIZATION ==================
-
+  // STATS
   const messages = await statsChannel.messages.fetch({ limit: 10 });
   statsMessage = messages.find(m => m.author.id === client.user.id);
 
@@ -84,89 +81,130 @@ client.once(Events.ClientReady, async () => {
     statsMessage = await statsChannel.send("Loading stats...");
   }
 
-  // Update every 15s (Safer than 5s to avoid edit rate limits)
   setInterval(updateCustomerStats, 15000);
   updateCustomerStats();
 });
 
-// ================== LIVE STATS ==================
+// ================== STATS ==================
 
 async function updateCustomerStats() {
   try {
-    if (!statsMessage) return;
     const guild = statsMessage.guild;
 
-    // Use cache instead of fetching every 15 seconds
-    const customers = guild.members.cache.filter(member =>
-      member.roles.cache.has(CUSTOMER_ROLE_ID)
+    const customers = guild.members.cache.filter(m =>
+      m.roles.cache.has(CUSTOMER_ROLE_ID)
     );
 
-    const totalCustomers = customers.size;
-
-    const onlineCustomers = customers.filter(member => {
-      const status = member.presence?.status;
-      return ["online", "idle", "dnd"].includes(status);
-    }).size;
+    const online = customers.filter(m =>
+      ["online", "idle", "dnd"].includes(m.presence?.status)
+    ).size;
 
     const embed = new EmbedBuilder()
       .setTitle("🔥 LIVE CUSTOMER STATS")
       .setDescription(
-        `👥 Total Customers: **${totalCustomers}**\n🟢 Online Customers: **${onlineCustomers}**`
+        `👥 Total Customers: **${customers.size}**\n🟢 Online Customers: **${online}**`
       )
-      .setColor("#a855f7")
-      .setFooter({ text: "Updates every 15s" });
-
-    await statsMessage.edit({ embeds: [embed] }).catch(() => { });
-
-  } catch (err) {
-    console.log("Stats error:", err);
-  }
-}
-
-// ================== MEMBER JOIN ==================
-
-client.on(Events.GuildMemberAdd, async member => {
-  try {
-    await member.roles.add(MEMBER_ROLE_ID).catch(() => { });
-
-    const welcomeChannel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
-    if (!welcomeChannel) return;
-
-    const embed = new EmbedBuilder()
-      .setTitle("🎉 Welcome to ZYN HUB")
-      .setDescription(`👋 Welcome ${member}\n💎 You are verified!`)
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
       .setColor("#a855f7");
 
-    await welcomeChannel.send({ embeds: [embed] });
-
-  } catch (err) {
-    console.log(err);
+    await statsMessage.edit({ embeds: [embed] }).catch(() => {});
+  } catch (e) {
+    console.log(e);
   }
-});
-function safeName(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 20);
 }
+
+// ================== JOIN ==================
+
+function safeName(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 20);
+}
+
+client.on(Events.GuildMemberAdd, async member => {
+  await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+
+  const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
+  if (!channel) return;
+
+  const embed = new EmbedBuilder()
+    .setTitle("🎉 Welcome")
+    .setDescription(`Welcome ${member}`)
+    .setColor("#a855f7");
+
+  channel.send({ embeds: [embed] });
+});
+
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
-    if (interaction.isButton()) {
-      if (interaction.customId === "create_ticket") {
-        const existingTicket = interaction.guild.channels.cache.find(
-          c => c.name.startsWith(`ticket-${safeName(interaction.user.username)}`)
-        );
 
-        if (existingTicket) {
-          return interaction.reply({
-            content: `❌ You already have a ticket: ${existingTicket}`,
-            ephemeral: true
-          });
-        }
+    // ================= SLASH COMMANDS =================
+    if (interaction.isChatInputCommand()) {
+
+      // /lock
+      if (interaction.commandName === "lock") {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+          return interaction.reply({ content: "❌ No permission", ephemeral: true });
+
+        await interaction.channel.permissionOverwrites.edit(interaction.guild.id, {
+          SendMessages: false
+        });
+
+        return interaction.reply("🔒 Locked.");
+      }
+
+      // /kick
+      if (interaction.commandName === "kick") {
+        const user = interaction.options.getMember("user");
+        await user.kick();
+        return interaction.reply(`👢 Kicked ${user.user.tag}`);
+      }
+
+      // /ban
+      if (interaction.commandName === "ban") {
+        const user = interaction.options.getMember("user");
+        await user.ban();
+        return interaction.reply(`⛔ Banned ${user.user.tag}`);
+      }
+
+      // /role give
+      if (interaction.commandName === "role") {
+        const user = interaction.options.getMember("user");
+        const role = interaction.options.getRole("role");
+
+        await user.roles.add(role);
+        return interaction.reply(`✅ Gave role ${role.name} to ${user.user.tag}`);
+      }
+
+      // /timeout
+      if (interaction.commandName === "timeout") {
+        const user = interaction.options.getMember("user");
+        const minutes = interaction.options.getInteger("minutes");
+
+        await user.timeout(minutes * 60000);
+        return interaction.reply(`⏳ Timed out ${user.user.tag}`);
+      }
+
+      // /untimeout
+      if (interaction.commandName === "untimeout") {
+        const user = interaction.options.getMember("user");
+
+        await user.timeout(null);
+        return interaction.reply(`✅ Removed timeout`);
+      }
+
+      // /clear
+      if (interaction.commandName === "clear") {
+        const amount = interaction.options.getInteger("amount");
+
+        await interaction.channel.bulkDelete(amount, true);
+        return interaction.reply({ content: `🧹 Deleted ${amount}`, ephemeral: true });
+      }
+    }
+
+    // ================= BUTTONS =================
+    if (interaction.isButton()) {
+
+      if (interaction.customId === "create_ticket") {
 
         const modal = new ModalBuilder()
           .setCustomId("purchase_modal")
@@ -179,7 +217,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         const descriptionInput = new TextInputBuilder()
           .setCustomId("description")
-          .setLabel("Describe what you need")
+          .setLabel("Describe your need")
           .setStyle(TextInputStyle.Paragraph);
 
         modal.addComponents(
@@ -191,74 +229,76 @@ client.on(Events.InteractionCreate, async interaction => {
       }
 
       if (interaction.customId === "claim_ticket") {
-        const newName = `claimed-${safeName(interaction.user.username)}`;
+        await interaction.channel.setName(`claimed-${safeName(interaction.user.username)}`);
 
-        await interaction.channel.setName(newName).catch(() => { });
-        if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-          return interaction.reply({ content: "❌ Staff only.", ephemeral: true });
-        }
-
-        const buttons = new ActionRowBuilder().addComponents(
+        const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId("claimed")
-            .setLabel(`✅ Claimed by ${interaction.user.username}`)
+            .setLabel(`Claimed by ${interaction.user.username}`)
             .setStyle(ButtonStyle.Success)
             .setDisabled(true),
           new ButtonBuilder()
             .setCustomId("close_ticket")
-            .setLabel("🔒 Close Ticket")
+            .setLabel("Close")
             .setStyle(ButtonStyle.Danger)
         );
 
-        await interaction.message.edit({ components: [buttons] });
-        await interaction.reply({ content: `📌 Ticket claimed by ${interaction.user}` });
+        await interaction.message.edit({ components: [row] });
+        return interaction.reply("📌 Claimed.");
       }
 
       if (interaction.customId === "close_ticket") {
-        if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-          return interaction.reply({ content: "❌ Staff only.", ephemeral: true });
-        }
-        await interaction.reply({ content: "🔒 Closing ticket..." });
-        setTimeout(() => interaction.channel.delete().catch(() => { }), 3000);
+        await interaction.reply("Closing...");
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
       }
     }
 
+    // ================= MODAL =================
     if (interaction.isModalSubmit()) {
+
       if (interaction.customId === "purchase_modal") {
+
         const product = interaction.fields.getTextInputValue("product");
         const description = interaction.fields.getTextInputValue("description");
 
-        const ticketChannel = await interaction.guild.channels.create({
+        const channel = await interaction.guild.channels.create({
           name: `ticket-${safeName(interaction.user.username)}`,
           type: ChannelType.GuildText,
           parent: CATEGORY_ID,
           permissionOverwrites: [
             { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
-            { id: STAFF_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] }
+            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+            { id: STAFF_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
           ]
         });
 
-        const buttons = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("claim_ticket").setLabel("📌 Claim Ticket").setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Close Ticket").setStyle(ButtonStyle.Danger)
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId("claim_ticket").setLabel("Claim").setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId("close_ticket").setLabel("Close").setStyle(ButtonStyle.Danger)
         );
 
         const embed = new EmbedBuilder()
-          .setTitle("🛒 Purchase Ticket")
+          .setTitle("Ticket")
           .addFields(
-            { name: "Customer", value: `<@${interaction.user.id}>` },
+            { name: "User", value: `<@${interaction.user.id}>` },
             { name: "Product", value: product },
             { name: "Description", value: description }
           )
           .setColor("#a855f7");
 
-        await ticketChannel.send({ content: `<@&${STAFF_ROLE_ID}> | <@${interaction.user.id}>`, embeds: [embed], components: [buttons] });
-        await interaction.reply({ content: `✅ Ticket created: ${ticketChannel}`, ephemeral: true });
+        await channel.send({
+          content: `<@&${STAFF_ROLE_ID}>`,
+          embeds: [embed],
+          components: [row]
+        });
+
+        return interaction.reply({ content: `Ticket created: ${channel}`, ephemeral: true });
       }
     }
+
   } catch (err) {
     console.log(err);
   }
 });
+
 client.login(process.env.TOKEN);
