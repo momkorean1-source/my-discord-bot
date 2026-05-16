@@ -14,6 +14,8 @@ const {
   Partials
 } = require("discord.js");
 
+// ================== CLIENT ==================
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -23,6 +25,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions
   ],
+
   partials: [
     Partials.Message,
     Partials.Channel,
@@ -59,24 +62,40 @@ let statsMessage;
 // ================== READY ==================
 
 client.once(Events.ClientReady, async () => {
+
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  const statsChannel = await client.channels.fetch(STATS_CHANNEL_ID).catch(() => null);
+  // ================== STATS CHANNEL ==================
+
+  const statsChannel = await client.channels
+    .fetch(STATS_CHANNEL_ID)
+    .catch(() => null);
+
   if (!statsChannel) return;
 
   const guild = statsChannel.guild;
+
   await guild.members.fetch().catch(() => {});
 
-  // ================= REACTION ROLES =================
+  // ================== REACTION ROLE EMOJIS ==================
 
-  const rrChannel = await client.channels.fetch(REACTION_ROLE_CHANNEL_ID).catch(() => null);
+  const rrChannel = await client.channels
+    .fetch(REACTION_ROLE_CHANNEL_ID)
+    .catch(() => null);
 
   if (rrChannel) {
-    const msg = await rrChannel.messages.fetch(REACTION_ROLE_MESSAGE_ID).catch(() => null);
+
+    const msg = await rrChannel.messages
+      .fetch(REACTION_ROLE_MESSAGE_ID)
+      .catch(() => null);
 
     if (msg) {
+
       for (const emojiId of Object.keys(reactionRoles)) {
-        const exists = msg.reactions.cache.find(r => r.emoji.id === emojiId);
+
+        const exists = msg.reactions.cache.find(
+          r => r.emoji.id === emojiId
+        );
 
         if (!exists) {
           await msg.react(emojiId).catch(() => {});
@@ -85,43 +104,68 @@ client.once(Events.ClientReady, async () => {
     }
   }
 
-  // ================= STATS SAFE INIT =================
+  // ================== STATS ==================
 
-  const messages = await statsChannel.messages.fetch({ limit: 10 }).catch(() => null);
+  const messages = await statsChannel.messages
+    .fetch({ limit: 10 })
+    .catch(() => null);
 
   statsMessage = messages?.find(
     m => m.author.id === client.user.id
   );
 
   if (!statsMessage) {
-    statsMessage = await statsChannel.send("📊 Loading live stats...");
+    statsMessage = await statsChannel.send(
+      "📊 Loading live stats..."
+    );
   }
 
   setInterval(updateCustomerStats, 15000);
+
   updateCustomerStats();
 
-  // ================= TICKET PANEL =================
+  // ================== TICKET PANEL ==================
 
-  const panelChannel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+  const panelChannel = await client.channels
+    .fetch(PANEL_CHANNEL_ID)
+    .catch(() => null);
 
   if (panelChannel) {
 
     const row = new ActionRowBuilder().addComponents(
+
       new ButtonBuilder()
         .setCustomId("create_ticket")
         .setLabel("🛒 OPEN PURCHASE TICKET")
         .setStyle(ButtonStyle.Primary)
+
     );
 
     const embed = new EmbedBuilder()
+
       .setTitle("🛒 PREMIUM PURCHASE CENTER")
-      .setDescription("Click below to open a private purchase ticket with our team.")
+
+      .setDescription(
+`💜 Need services or products?
+
+Click the button below to create a private purchase ticket with our team.
+
+✅ Fast Support
+✅ Trusted Service
+✅ Professional Staff`
+      )
+
       .setColor("#a855f7")
+
       .setFooter({
         text: "Fast support • Safe orders • 24/7"
-      });
+      })
 
-    const msgs = await panelChannel.messages.fetch({ limit: 10 }).catch(() => null);
+      .setTimestamp();
+
+    const msgs = await panelChannel.messages
+      .fetch({ limit: 10 })
+      .catch(() => null);
 
     const exists = msgs?.find(
       m =>
@@ -130,46 +174,129 @@ client.once(Events.ClientReady, async () => {
     );
 
     if (!exists) {
-      panelChannel.send({
+
+      await panelChannel.send({
         embeds: [embed],
         components: [row]
-      });
+      }).catch(() => {});
     }
   }
 });
 
-// ================== AUTO ROLE ==================
+// ================== SUPER PRO AUTO ROLE + WELCOMER ==================
 
 client.on(Events.GuildMemberAdd, async member => {
+
   try {
 
-    // Give member role
+    // ================== AUTO ROLE ==================
+
     await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
 
-    // Welcome message
-    const welcomeChannel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
+    // ================== WELCOME CHANNEL ==================
 
-    if (welcomeChannel) {
-      const embed = new EmbedBuilder()
-        .setTitle("👋 Welcome!")
-        .setDescription(`Welcome to the server ${member}!`)
-        .setColor("#a855f7")
-        .setThumbnail(member.user.displayAvatarURL())
-        .setTimestamp();
+    const welcomeChannel = await client.channels
+      .fetch(WELCOME_CHANNEL_ID)
+      .catch(() => null);
 
-      welcomeChannel.send({
-        embeds: [embed]
-      }).catch(() => {});
+    if (!welcomeChannel) return;
+
+    const memberCount = member.guild.memberCount;
+
+    // ================== EMBED ==================
+
+    const embed = new EmbedBuilder()
+
+      .setColor("#a855f7")
+
+      .setAuthor({
+        name: `${member.user.username} joined the server`,
+        iconURL: member.user.displayAvatarURL({
+          dynamic: true
+        })
+      })
+
+      .setThumbnail(
+        member.user.displayAvatarURL({
+          dynamic: true,
+          size: 1024
+        })
+      )
+
+      .setDescription(
+`💜 Welcome ${member} to **${member.guild.name}**
+
+✨ Enjoy your stay and have fun.
+🛒 Need help? Open a ticket anytime.
+👥 You are member **#${memberCount}**`
+      )
+
+      .addFields(
+        {
+          name: "📅 Discord Account Created",
+          value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`,
+          inline: true
+        },
+        {
+          name: "🆔 User ID",
+          value: member.id,
+          inline: true
+        }
+      )
+
+      .setFooter({
+        text: `Welcome to ${member.guild.name}`
+      })
+
+      .setTimestamp();
+
+    // ================== BUTTONS ==================
+
+    const row = new ActionRowBuilder().addComponents(
+
+      new ButtonBuilder()
+        .setLabel("Open Ticket")
+        .setStyle(ButtonStyle.Link)
+        .setURL("https://discord.com"),
+
+      new ButtonBuilder()
+        .setLabel("Server")
+        .setStyle(ButtonStyle.Link)
+        .setURL("https://discord.com")
+    );
+
+    // ================== SEND ==================
+
+    const msg = await welcomeChannel.send({
+
+      content: `🎉 Welcome ${member}!`,
+
+      embeds: [embed],
+
+      components: [row]
+
+    }).catch(() => null);
+
+    // ================== AUTO DELETE ==================
+
+    if (msg) {
+
+      setTimeout(() => {
+        msg.delete().catch(() => {});
+      }, 600000);
     }
 
   } catch (err) {
-    console.log("AUTO ROLE ERROR:", err);
+
+    console.log("WELCOME ERROR:", err);
+
   }
 });
 
 // ================== REACTION ROLE ADD ==================
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
+
   try {
 
     if (user.bot) return;
@@ -186,26 +313,33 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     ) return;
 
     const emojiId = reaction.emoji.id;
+
     const roleId = reactionRoles[emojiId];
 
     if (!roleId) return;
 
-    const member = await reaction.message.guild.members.fetch(user.id).catch(() => null);
+    const member = await reaction.message.guild.members
+      .fetch(user.id)
+      .catch(() => null);
 
     if (!member) return;
 
     if (!member.roles.cache.has(roleId)) {
+
       await member.roles.add(roleId).catch(() => {});
     }
 
   } catch (err) {
+
     console.log("REACTION ROLE ADD ERROR:", err);
+
   }
 });
 
 // ================== REACTION ROLE REMOVE ==================
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
+
   try {
 
     if (user.bot) return;
@@ -222,65 +356,113 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
     ) return;
 
     const emojiId = reaction.emoji.id;
+
     const roleId = reactionRoles[emojiId];
 
     if (!roleId) return;
 
-    const member = await reaction.message.guild.members.fetch(user.id).catch(() => null);
+    const member = await reaction.message.guild.members
+      .fetch(user.id)
+      .catch(() => null);
 
     if (!member) return;
 
     if (member.roles.cache.has(roleId)) {
+
       await member.roles.remove(roleId).catch(() => {});
     }
 
   } catch (err) {
+
     console.log("REACTION ROLE REMOVE ERROR:", err);
+
   }
 });
 
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
+
   try {
+
+    // ================== BUTTONS ==================
 
     if (interaction.isButton()) {
 
-      // ================= CREATE TICKET =================
+      // ================== CREATE TICKET ==================
 
       if (interaction.customId === "create_ticket") {
 
+        const existingChannel = interaction.guild.channels.cache.find(
+          c =>
+            c.name ===
+            `ticket-${interaction.user.username}`
+              .toLowerCase()
+              .replace(/[^a-z0-9-]/g, "")
+              .slice(0, 20)
+        );
+
+        if (existingChannel) {
+
+          return interaction.reply({
+            content: `❌ You already have a ticket: ${existingChannel}`,
+            ephemeral: true
+          });
+        }
+
         const modal = new ModalBuilder()
+
           .setCustomId("purchase_modal")
+
           .setTitle("Purchase Ticket");
 
         const product = new TextInputBuilder()
+
           .setCustomId("product")
+
           .setLabel("What do you want to purchase?")
-          .setStyle(TextInputStyle.Short);
+
+          .setStyle(TextInputStyle.Short)
+
+          .setRequired(true);
 
         const description = new TextInputBuilder()
+
           .setCustomId("description")
+
           .setLabel("Describe it")
-          .setStyle(TextInputStyle.Paragraph);
+
+          .setStyle(TextInputStyle.Paragraph)
+
+          .setRequired(true);
 
         modal.addComponents(
+
           new ActionRowBuilder().addComponents(product),
+
           new ActionRowBuilder().addComponents(description)
         );
 
         return interaction.showModal(modal);
       }
 
-      // ================= CLAIM TICKET =================
+      // ================== CLAIM TICKET ==================
 
       if (interaction.customId === "claim_ticket") {
 
         const channel = interaction.channel;
 
-        await channel.setName(`claimed-${interaction.user.username}`).catch(() => {});
+        await channel.setName(
+
+          `claimed-${interaction.user.username}`
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, "")
+            .slice(0, 25)
+
+        ).catch(() => {});
 
         const row = new ActionRowBuilder().addComponents(
+
           new ButtonBuilder()
             .setCustomId("claimed_locked")
             .setLabel(`Claimed by ${interaction.user.username}`)
@@ -298,42 +480,62 @@ client.on(Events.InteractionCreate, async interaction => {
         }).catch(() => {});
 
         return interaction.reply({
-          content: "📌 Ticket claimed!",
+          content: "📌 Ticket claimed successfully!",
           ephemeral: true
         });
       }
 
-      // ================= CLOSE TICKET =================
+      // ================== CLOSE TICKET ==================
 
       if (interaction.customId === "close_ticket") {
 
-        await interaction.reply("❌ Closing ticket...");
+        await interaction.reply({
+          content: "❌ Closing ticket in 3 seconds..."
+        });
 
         setTimeout(() => {
+
           interaction.channel.delete().catch(() => {});
-        }, 2500);
+
+        }, 3000);
       }
     }
 
-    // ================= MODAL SUBMIT =================
+    // ================== MODAL SUBMIT ==================
 
     if (interaction.isModalSubmit()) {
 
       if (interaction.customId === "purchase_modal") {
 
-        const product = interaction.fields.getTextInputValue("product");
-        const description = interaction.fields.getTextInputValue("description");
+        const product =
+          interaction.fields.getTextInputValue("product");
+
+        const description =
+          interaction.fields.getTextInputValue("description");
+
+        // ================== CREATE CHANNEL ==================
 
         const channel = await interaction.guild.channels.create({
-          name: `ticket-${interaction.user.username}`,
+
+          name:
+            `ticket-${interaction.user.username}`
+              .toLowerCase()
+              .replace(/[^a-z0-9-]/g, "")
+              .slice(0, 20),
+
           type: ChannelType.GuildText,
+
           parent: CATEGORY_ID,
 
           permissionOverwrites: [
+
             {
               id: interaction.guild.id,
-              deny: [PermissionsBitField.Flags.ViewChannel]
+              deny: [
+                PermissionsBitField.Flags.ViewChannel
+              ]
             },
+
             {
               id: interaction.user.id,
               allow: [
@@ -341,6 +543,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 PermissionsBitField.Flags.SendMessages
               ]
             },
+
             {
               id: STAFF_ROLE_ID,
               allow: [
@@ -351,21 +554,36 @@ client.on(Events.InteractionCreate, async interaction => {
           ]
         });
 
+        // ================== EMBED ==================
+
         const embed = new EmbedBuilder()
+
           .setTitle("🛒 New Purchase Ticket")
-          .setDescription(`👤 Opened by <@${interaction.user.id}>`)
+
+          .setDescription(
+            `👤 Opened by <@${interaction.user.id}>`
+          )
+
           .addFields(
             {
-              name: "Product",
+              name: "📦 Product",
               value: product
             },
             {
-              name: "Description",
+              name: "📝 Description",
               value: description
             }
           )
+
           .setColor("#a855f7")
+
+          .setFooter({
+            text: `User ID: ${interaction.user.id}`
+          })
+
           .setTimestamp();
+
+        // ================== BUTTONS ==================
 
         const row = new ActionRowBuilder().addComponents(
 
@@ -380,21 +598,32 @@ client.on(Events.InteractionCreate, async interaction => {
             .setStyle(ButtonStyle.Danger)
         );
 
+        // ================== SEND ==================
+
         await channel.send({
-          content: `<@&${STAFF_ROLE_ID}> <@${interaction.user.id}>`,
+
+          content:
+            `<@&${STAFF_ROLE_ID}> <@${interaction.user.id}>`,
+
           embeds: [embed],
+
           components: [row]
+
         });
 
         return interaction.reply({
+
           content: `✅ Ticket created: ${channel}`,
+
           ephemeral: true
         });
       }
     }
 
   } catch (err) {
+
     console.log("INTERACTION ERROR:", err);
+
   }
 });
 
@@ -412,21 +641,29 @@ async function updateCustomerStats() {
 
     await guild.members.fetch().catch(() => {});
 
-    const customers = guild.members.cache.filter(m =>
-      m.roles.cache.has(CUSTOMER_ROLE_ID)
+    const customers = guild.members.cache.filter(
+      m => m.roles.cache.has(CUSTOMER_ROLE_ID)
     );
 
-    const online = customers.filter(m =>
-      m.presence &&
-      ["online", "idle", "dnd"].includes(m.presence.status)
+    const online = customers.filter(
+      m =>
+        m.presence &&
+        ["online", "idle", "dnd"].includes(
+          m.presence.status
+        )
     ).size;
 
     const embed = new EmbedBuilder()
+
       .setTitle("🔥 LIVE CUSTOMER STATS")
+
       .setDescription(
-        `👥 Total Customers: **${customers.size}**\n🟢 Online Customers: **${online}**`
+`👥 Total Customers: **${customers.size}**
+🟢 Online Customers: **${online}**`
       )
+
       .setColor("#a855f7")
+
       .setTimestamp();
 
     await statsMessage.edit({
@@ -434,8 +671,22 @@ async function updateCustomerStats() {
     }).catch(() => {});
 
   } catch (e) {
+
     console.log("STATS ERROR:", e);
+
   }
 }
+
+// ================== ERROR SAFETY ==================
+
+process.on("unhandledRejection", err => {
+  console.log("UNHANDLED REJECTION:", err);
+});
+
+process.on("uncaughtException", err => {
+  console.log("UNCAUGHT EXCEPTION:", err);
+});
+
+// ================== LOGIN ==================
 
 client.login(process.env.TOKEN);
