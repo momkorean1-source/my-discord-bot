@@ -46,6 +46,8 @@ const reactionRoles = {
   "1135251088782672013": "1505255546402639942"  // custom bot
 };
 
+// ================== GLOBAL ==================
+
 let statsMessage;
 
 // ================== READY ==================
@@ -54,14 +56,15 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   const statsChannel = await client.channels.fetch(STATS_CHANNEL_ID).catch(() => null);
-  if (!statsChannel) return;
+  if (!statsChannel) return console.log("❌ Stats channel not found.");
 
   const guild = statsChannel.guild;
 
   await guild.members.fetch().catch(() => {});
 
-  // reaction role message setup
+  // ================= REACTION MESSAGE SETUP =================
   const rrChannel = await client.channels.fetch(REACTION_ROLE_CHANNEL_ID).catch(() => null);
+
   if (rrChannel) {
     const msg = await rrChannel.messages.fetch(REACTION_ROLE_MESSAGE_ID).catch(() => null);
 
@@ -74,22 +77,28 @@ client.once(Events.ClientReady, async () => {
           await msg.react(emojiId).catch(() => {});
         }
       }
-    } else {
-      console.log("❌ Reaction role message not found");
     }
+  }
+
+  // ================= STATS INIT FIX =================
+  const messages = await statsChannel.messages.fetch({ limit: 10 }).catch(() => null);
+  statsMessage = messages?.find(m => m.author.id === client.user.id);
+
+  if (!statsMessage) {
+    statsMessage = await statsChannel.send("📊 Loading live stats...");
   }
 
   setInterval(updateCustomerStats, 15000);
   updateCustomerStats();
 });
 
-// ================== REACTION ROLES SYSTEM ==================
+// ================== REACTION ROLES ==================
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
 
-  if (reaction.partial) await reaction.fetch();
-  if (reaction.message.partial) await reaction.message.fetch();
+  if (reaction.partial) await reaction.fetch().catch(() => {});
+  if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
   if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
 
@@ -105,8 +114,8 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
   if (user.bot) return;
 
-  if (reaction.partial) await reaction.fetch();
-  if (reaction.message.partial) await reaction.message.fetch();
+  if (reaction.partial) await reaction.fetch().catch(() => {});
+  if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
   if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
 
@@ -119,18 +128,22 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
   await member.roles.remove(roleId).catch(() => {});
 });
 
-// ================== STATS ==================
+// ================== STATS (FIXED) ==================
 
 async function updateCustomerStats() {
   try {
+    if (!statsMessage) return;
+
     const guild = statsMessage.guild;
+
+    await guild.members.fetch().catch(() => {});
 
     const customers = guild.members.cache.filter(m =>
       m.roles.cache.has(CUSTOMER_ROLE_ID)
     );
 
     const online = customers.filter(m =>
-      ["online", "idle", "dnd"].includes(m.presence?.status)
+      m.presence && ["online", "idle", "dnd"].includes(m.presence.status)
     ).size;
 
     const embed = new EmbedBuilder()
@@ -138,19 +151,16 @@ async function updateCustomerStats() {
       .setDescription(
         `👥 Total Customers: **${customers.size}**\n🟢 Online Customers: **${online}**`
       )
-      .setColor("#a855f7");
+      .setColor("#a855f7")
+      .setTimestamp();
 
     await statsMessage.edit({ embeds: [embed] }).catch(() => {});
   } catch (e) {
-    console.log(e);
+    console.log("STATS ERROR:", e);
   }
 }
 
-// ================== JOIN ==================
-
-function safeName(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 20);
-}
+// ================== JOIN (IMPROVED WELCOME) ==================
 
 client.on(Events.GuildMemberAdd, async member => {
   await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
@@ -159,9 +169,14 @@ client.on(Events.GuildMemberAdd, async member => {
   if (!channel) return;
 
   const embed = new EmbedBuilder()
-    .setTitle("🎉 Welcome")
-    .setDescription(`Welcome ${member}`)
-    .setColor("#a855f7");
+    .setTitle("👋 Welcome to the Server!")
+    .setDescription(
+      `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
+    )
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setColor("#a855f7")
+    .setFooter({ text: "Enjoy your stay!" })
+    .setTimestamp();
 
   channel.send({ embeds: [embed] });
 });
@@ -171,17 +186,16 @@ client.on(Events.GuildMemberAdd, async member => {
 client.on(Events.InteractionCreate, async interaction => {
   try {
     if (interaction.isChatInputCommand()) {
-      // your existing commands unchanged (kept short)
+      // unchanged
     }
 
     if (interaction.isButton()) {
-      // your ticket system unchanged
+      // unchanged
     }
 
     if (interaction.isModalSubmit()) {
-      // your modal system unchanged
+      // unchanged
     }
-
   } catch (err) {
     console.log(err);
   }
