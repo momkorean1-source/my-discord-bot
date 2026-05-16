@@ -59,8 +59,9 @@ client.once(Events.ClientReady, async () => {
   if (!statsChannel) return;
 
   const guild = statsChannel.guild;
-
   await guild.members.fetch().catch(() => {});
+
+  // ================= REACTION ROLES =================
 
   const rrChannel = await client.channels.fetch(REACTION_ROLE_CHANNEL_ID).catch(() => null);
 
@@ -75,6 +76,8 @@ client.once(Events.ClientReady, async () => {
     }
   }
 
+  // ================= STATS SAFE INIT =================
+
   const messages = await statsChannel.messages.fetch({ limit: 10 }).catch(() => null);
   statsMessage = messages?.find(m => m.author.id === client.user.id);
 
@@ -85,7 +88,7 @@ client.once(Events.ClientReady, async () => {
   setInterval(updateCustomerStats, 15000);
   updateCustomerStats();
 
-  // ================= TICKET PANEL (PRO UPGRADE) =================
+  // ================= TICKET PANEL =================
 
   const panelChannel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
 
@@ -112,15 +115,12 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-// ================== TICKET STORAGE ==================
-const tickets = new Map();
-
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
 
-    // ================= BUTTON =================
+    // ================= BUTTONS =================
     if (interaction.isButton()) {
 
       // OPEN TICKET
@@ -149,14 +149,14 @@ client.on(Events.InteractionCreate, async interaction => {
       }
 
       // CLAIM TICKET
-      if (interaction.customId.startsWith("claim_ticket")) {
+      if (interaction.customId === "claim_ticket") {
         const channel = interaction.channel;
 
-        await channel.setName(`claimed-${interaction.user.username}`);
+        await channel.setName(`claimed-${interaction.user.username}`).catch(() => {});
 
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-            .setCustomId("claimed")
+            .setCustomId("claimed_locked")
             .setLabel(`Claimed by ${interaction.user.username}`)
             .setStyle(ButtonStyle.Success)
             .setDisabled(true),
@@ -166,7 +166,7 @@ client.on(Events.InteractionCreate, async interaction => {
             .setStyle(ButtonStyle.Danger)
         );
 
-        await interaction.message.edit({ components: [row] });
+        await interaction.message.edit({ components: [row] }).catch(() => {});
 
         return interaction.reply({
           content: "📌 Ticket claimed!",
@@ -177,7 +177,7 @@ client.on(Events.InteractionCreate, async interaction => {
       // CLOSE TICKET
       if (interaction.customId === "close_ticket") {
         await interaction.reply("❌ Closing ticket...");
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 2500);
       }
     }
 
@@ -250,17 +250,19 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
   } catch (err) {
-    console.log(err);
+    console.log("INTERACTION ERROR:", err);
   }
 });
 
-// ================== STATS (UNCHANGED) ==================
+// ================== STATS (CRASH FIXED) ==================
 
 async function updateCustomerStats() {
   try {
     if (!statsMessage) return;
 
     const guild = statsMessage.guild;
+    if (!guild) return;
+
     await guild.members.fetch().catch(() => {});
 
     const customers = guild.members.cache.filter(m =>
@@ -281,8 +283,8 @@ async function updateCustomerStats() {
 
     await statsMessage.edit({ embeds: [embed] }).catch(() => {});
   } catch (e) {
-    console.log(e);
+    console.log("STATS ERROR:", e);
   }
-});
+}
 
 client.login(process.env.TOKEN);
