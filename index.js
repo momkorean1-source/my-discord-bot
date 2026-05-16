@@ -115,15 +115,23 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
+// ================== 🔥 AUTO ROLE ADDED HERE ==================
+
+client.on(Events.GuildMemberAdd, async member => {
+  try {
+    await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+  } catch (err) {
+    console.log("AUTO ROLE ERROR:", err);
+  }
+});
+
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
 
-    // ================= BUTTONS =================
     if (interaction.isButton()) {
 
-      // OPEN TICKET
       if (interaction.customId === "create_ticket") {
 
         const modal = new ModalBuilder()
@@ -148,7 +156,6 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.showModal(modal);
       }
 
-      // CLAIM TICKET
       if (interaction.customId === "claim_ticket") {
         const channel = interaction.channel;
 
@@ -174,14 +181,12 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      // CLOSE TICKET
       if (interaction.customId === "close_ticket") {
         await interaction.reply("❌ Closing ticket...");
         setTimeout(() => interaction.channel.delete().catch(() => {}), 2500);
       }
     }
 
-    // ================= MODAL =================
     if (interaction.isModalSubmit()) {
 
       if (interaction.customId === "purchase_modal") {
@@ -254,7 +259,7 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
-// ================== STATS (CRASH FIXED) ==================
+// ================== STATS ==================
 
 async function updateCustomerStats() {
   try {
@@ -285,6 +290,6 @@ async function updateCustomerStats() {
   } catch (e) {
     console.log("STATS ERROR:", e);
   }
-}
+});
 
 client.login(process.env.TOKEN);
