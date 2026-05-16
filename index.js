@@ -63,7 +63,7 @@ let statsMessage;
 
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
-client.user.setActivity("ZYN HUB is Cheapest Custome Discord Bots Creators", {
+client.user.setActivity("Cheapest Custome Discord Bots Creators", {
   type: 0
 });
   const statsChannel = await client.channels.fetch(STATS_CHANNEL_ID).catch(() => null);
