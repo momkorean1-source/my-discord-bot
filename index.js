@@ -80,7 +80,7 @@ client.once(Events.ClientReady, async () => {
     }
   }
 
-  // ================= STATS INIT FIX =================
+  // ================= STATS INIT =================
   const messages = await statsChannel.messages.fetch({ limit: 10 }).catch(() => null);
   statsMessage = messages?.find(m => m.author.id === client.user.id);
 
@@ -90,6 +90,30 @@ client.once(Events.ClientReady, async () => {
 
   setInterval(updateCustomerStats, 15000);
   updateCustomerStats();
+
+  // ================= TICKET PANEL (RESTORED) =================
+  const panelChannel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+
+  if (panelChannel) {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("create_ticket")
+        .setLabel("🛒 OPEN PURCHASE TICKET")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    const embed = new EmbedBuilder()
+      .setTitle("🛒 Purchase System")
+      .setDescription("Click the button below to open a private purchase ticket.")
+      .setColor("#a855f7");
+
+    const msgs = await panelChannel.messages.fetch({ limit: 10 }).catch(() => null);
+    const exists = msgs?.find(m => m.author.id === client.user.id && m.components.length);
+
+    if (!exists) {
+      panelChannel.send({ embeds: [embed], components: [row] });
+    }
+  }
 });
 
 // ================== REACTION ROLES ==================
@@ -128,7 +152,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
   await member.roles.remove(roleId).catch(() => {});
 });
 
-// ================== STATS (FIXED) ==================
+// ================== STATS ==================
 
 async function updateCustomerStats() {
   try {
@@ -160,36 +184,117 @@ async function updateCustomerStats() {
   }
 }
 
-// ================== JOIN (IMPROVED WELCOME) ==================
+// ================== WELCOME ==================
 
 client.on(Events.GuildMemberAdd, async member => {
-  try {
-    await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+  await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
 
-    const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
-    if (!channel) return;
+  const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
+  if (!channel) return;
 
-    const embed = new EmbedBuilder()
-      .setTitle("👋 Welcome to the Server!")
-      .setDescription(
-        `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
-      )
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-      .setColor("#a855f7")
-      .setFooter({ text: "Enjoy your stay!" })
-      .setTimestamp();
+  const embed = new EmbedBuilder()
+    .setTitle("👋 Welcome to the Server!")
+    .setDescription(
+      `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
+    )
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setColor("#a855f7")
+    .setFooter({ text: "Enjoy your stay!" })
+    .setTimestamp();
 
-    channel.send({ embeds: [embed] });
-  } catch (err) {
-    console.log("WELCOME ERROR:", err);
-  }
+  channel.send({ embeds: [embed] });
 });
 
-// ================== INTERACTIONS (FIXED COMMANDS) ==================
+// ================== INTERACTIONS (TICKETS FIXED) ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
 
+    // ============ BUTTONS ============
+    if (interaction.isButton()) {
+
+      if (interaction.customId === "create_ticket") {
+
+        const modal = new ModalBuilder()
+          .setCustomId("purchase_modal")
+          .setTitle("Purchase Ticket");
+
+        const product = new TextInputBuilder()
+          .setCustomId("product")
+          .setLabel("What do you want to purchase?")
+          .setStyle(TextInputStyle.Short);
+
+        const description = new TextInputBuilder()
+          .setCustomId("description")
+          .setLabel("Describe it")
+          .setStyle(TextInputStyle.Paragraph);
+
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(product),
+          new ActionRowBuilder().addComponents(description)
+        );
+
+        return interaction.showModal(modal);
+      }
+    }
+
+    // ============ MODAL ============
+    if (interaction.isModalSubmit()) {
+
+      if (interaction.customId === "purchase_modal") {
+
+        const product = interaction.fields.getTextInputValue("product");
+        const description = interaction.fields.getTextInputValue("description");
+
+        const channel = await interaction.guild.channels.create({
+          name: `ticket-${interaction.user.username}`,
+          type: ChannelType.GuildText,
+          parent: CATEGORY_ID,
+          permissionOverwrites: [
+            {
+              id: interaction.guild.id,
+              deny: [PermissionsBitField.Flags.ViewChannel]
+            },
+            {
+              id: interaction.user.id,
+              allow: [
+                PermissionsBitField.Flags.ViewChannel,
+                PermissionsBitField.Flags.SendMessages
+              ]
+            },
+            {
+              id: STAFF_ROLE_ID,
+              allow: [
+                PermissionsBitField.Flags.ViewChannel,
+                PermissionsBitField.Flags.SendMessages
+              ]
+            }
+          ]
+        });
+
+        const embed = new EmbedBuilder()
+          .setTitle("🛒 New Purchase Ticket")
+          .addFields(
+            { name: "User", value: `<@${interaction.user.id}>` },
+            { name: "Product", value: product },
+            { name: "Description", value: description }
+          )
+          .setColor("#a855f7")
+          .setTimestamp();
+
+        await channel.send({
+          content: `<@&${STAFF_ROLE_ID}>`,
+          embeds: [embed]
+        });
+
+        return interaction.reply({
+          content: `✅ Ticket created: ${channel}`,
+          ephemeral: true
+        });
+      }
+    }
+
+    // ============ COMMANDS ============
     if (interaction.isChatInputCommand()) {
 
       if (interaction.commandName === "lock") {
@@ -220,7 +325,7 @@ client.on(Events.InteractionCreate, async interaction => {
         const role = interaction.options.getRole("role");
 
         await user.roles.add(role);
-        return interaction.reply(`✅ Gave role ${role.name} to ${user.user.tag}`);
+        return interaction.reply(`✅ Gave role ${role.name}`);
       }
 
       if (interaction.commandName === "timeout") {
