@@ -40,10 +40,10 @@ const REACTION_ROLE_MESSAGE_ID = "1505257411349581865";
 const REACTION_ROLE_CHANNEL_ID = "1481857825066975303";
 
 const reactionRoles = {
-  "1463019802430935051": "1505257038958301224", // minecraft
-  "1411628099480715374": "1505257038958301224", // website
-  "1245798051050819584": "1481860425305034864", // ark
-  "1135251088782672013": "1505255546402639942"  // custom bot
+  "1463019802430935051": "1505257038958301224",
+  "1411628099480715374": "1505257038958301224",
+  "1245798051050819584": "1481860425305034864",
+  "1135251088782672013": "1505255546402639942"
 };
 
 // ================== GLOBAL ==================
@@ -62,7 +62,7 @@ client.once(Events.ClientReady, async () => {
 
   await guild.members.fetch().catch(() => {});
 
-  // ================= REACTION MESSAGE SETUP =================
+  // ================= REACTION SETUP =================
   const rrChannel = await client.channels.fetch(REACTION_ROLE_CHANNEL_ID).catch(() => null);
 
   if (rrChannel) {
@@ -163,39 +163,87 @@ async function updateCustomerStats() {
 // ================== JOIN (IMPROVED WELCOME) ==================
 
 client.on(Events.GuildMemberAdd, async member => {
-  await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
+  try {
+    await member.roles.add(MEMBER_ROLE_ID).catch(() => {});
 
-  const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
-  if (!channel) return;
+    const channel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
+    if (!channel) return;
 
-  const embed = new EmbedBuilder()
-    .setTitle("👋 Welcome to the Server!")
-    .setDescription(
-      `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
-    )
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-    .setColor("#a855f7")
-    .setFooter({ text: "Enjoy your stay!" })
-    .setTimestamp();
+    const embed = new EmbedBuilder()
+      .setTitle("👋 Welcome to the Server!")
+      .setDescription(
+        `Hey ${member} 👋\n\nWelcome to **${member.guild.name}**!\nWe're happy to have you here 💜`
+      )
+      .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+      .setColor("#a855f7")
+      .setFooter({ text: "Enjoy your stay!" })
+      .setTimestamp();
 
-  channel.send({ embeds: [embed] });
+    channel.send({ embeds: [embed] });
+  } catch (err) {
+    console.log("WELCOME ERROR:", err);
+  }
 });
 
-// ================== INTERACTIONS ==================
+// ================== INTERACTIONS (FIXED COMMANDS) ==================
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
+
     if (interaction.isChatInputCommand()) {
-      // unchanged
+
+      if (interaction.commandName === "lock") {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+          return interaction.reply({ content: "❌ No permission", ephemeral: true });
+
+        await interaction.channel.permissionOverwrites.edit(interaction.guild.id, {
+          SendMessages: false
+        });
+
+        return interaction.reply("🔒 Locked.");
+      }
+
+      if (interaction.commandName === "kick") {
+        const user = interaction.options.getMember("user");
+        await user.kick();
+        return interaction.reply(`👢 Kicked ${user.user.tag}`);
+      }
+
+      if (interaction.commandName === "ban") {
+        const user = interaction.options.getMember("user");
+        await user.ban();
+        return interaction.reply(`⛔ Banned ${user.user.tag}`);
+      }
+
+      if (interaction.commandName === "role") {
+        const user = interaction.options.getMember("user");
+        const role = interaction.options.getRole("role");
+
+        await user.roles.add(role);
+        return interaction.reply(`✅ Gave role ${role.name} to ${user.user.tag}`);
+      }
+
+      if (interaction.commandName === "timeout") {
+        const user = interaction.options.getMember("user");
+        const minutes = interaction.options.getInteger("minutes");
+
+        await user.timeout(minutes * 60000);
+        return interaction.reply(`⏳ Timed out ${user.user.tag}`);
+      }
+
+      if (interaction.commandName === "untimeout") {
+        const user = interaction.options.getMember("user");
+        await user.timeout(null);
+        return interaction.reply(`✅ Removed timeout`);
+      }
+
+      if (interaction.commandName === "clear") {
+        const amount = interaction.options.getInteger("amount");
+        await interaction.channel.bulkDelete(amount, true);
+        return interaction.reply({ content: `🧹 Deleted ${amount}`, ephemeral: true });
+      }
     }
 
-    if (interaction.isButton()) {
-      // unchanged
-    }
-
-    if (interaction.isModalSubmit()) {
-      // unchanged
-    }
   } catch (err) {
     console.log(err);
   }
