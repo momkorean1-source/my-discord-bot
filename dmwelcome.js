@@ -75,12 +75,12 @@ and MUCH more.
         new ButtonBuilder()
           .setLabel("💜 Join Server")
           .setStyle(ButtonStyle.Link)
-          .setURL("https://discord.gg/YOURSERVER"),
+          .setURL("https://discord.gg/De4bPZGqKc"),
 
         new ButtonBuilder()
           .setLabel("🛒 Open Ticket")
           .setStyle(ButtonStyle.Link)
-          .setURL("https://discord.gg/YOURSERVER")
+          .setURL("https://discord.gg/De4bPZGqKc")
 
       );
 
