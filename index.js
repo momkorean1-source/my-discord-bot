@@ -691,3 +691,4 @@ client.login(process.env.TOKEN);
 // ================== SECURITY ==================
 
 require("./security")(client);
+require("./dmwelcome")(client);
