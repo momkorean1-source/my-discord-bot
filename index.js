@@ -88,7 +88,7 @@ client.once(Events.ClientReady, async () => {
       statsMessage = await statsChannel.send("📊 Loading live stats...");
     }
 
-    setInterval(updateCustomerStats, 15000);
+    setInterval(updateCustomerStats, 1000);
     updateCustomerStats();
   }
 
@@ -164,7 +164,7 @@ Click the button below to create a private purchase ticket with our team.
 ✅ Professional Staff`
       )
       .setColor("#a855f7")
-      .setFooter({ text: "Fast support • Safe orders • 24/7" })
+      .setFooter({ text: "Fast support • Safest orders • 24/7" })
       .setTimestamp();
 
     const msgs = await panelChannel.messages.fetch({ limit: 10 }).catch(() => null);
@@ -217,8 +217,8 @@ client.on(Events.GuildMemberAdd, async member => {
           inline: true
         },
         {
-          name: "🆔 User ID",
-          value: member.id,
+          name: "🆔 User ",
+          value: member,
           inline: true
         }
       )
