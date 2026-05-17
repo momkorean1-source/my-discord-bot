@@ -15,6 +15,12 @@ const {
   ActivityType
 } = require("discord.js");
 
+const {
+  REST,
+  Routes,
+  SlashCommandBuilder
+} = require("discord.js");
+
 // ================== CLIENT ==================
 
 const client = new Client({
@@ -594,10 +600,106 @@ process.on("unhandledRejection", err => {
 process.on("uncaughtException", err => {
   console.log("UNCAUGHT EXCEPTION:", err);
 });
+// ================== SLASH COMMAND REGISTER ==================
 
+const commands = [
+
+  new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Replies with pong"),
+
+  new SlashCommandBuilder()
+    .setName("clear")
+    .setDescription("Delete messages")
+    .addIntegerOption(option =>
+      option
+        .setName("amount")
+        .setDescription("Amount")
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("lock")
+    .setDescription("Lock channel"),
+
+  new SlashCommandBuilder()
+    .setName("role")
+    .setDescription("Give role")
+
+].map(command => command.toJSON());
+
+const rest = new REST({ version: "10" })
+  .setToken(process.env.TOKEN);
+
+(async () => {
+
+  try {
+
+    console.log("🔄 Registering slash commands...");
+
+    await rest.put(
+      Routes.applicationCommands("1497005576645906442"),
+      { body: commands }
+    );
+
+    console.log("✅ Slash commands registered.");
+
+  } catch (err) {
+
+    console.log(err);
+  }
+
+})();
 // ================== LOGIN ==================
 
 client.login(process.env.TOKEN);
+// ================== SLASH COMMANDS ==================
+
+if (interaction.isChatInputCommand()) {
+
+  // ================== PING ==================
+
+  if (interaction.commandName === "ping") {
+
+    return interaction.reply("🏓 Pong!");
+  }
+
+  // ================== CLEAR ==================
+
+  if (interaction.commandName === "clear") {
+
+    const amount = interaction.options.getInteger("amount");
+
+    await interaction.channel.bulkDelete(amount, true);
+
+    return interaction.reply({
+      content: `✅ Deleted ${amount} messages.`,
+      ephemeral: true
+    });
+  }
+
+  // ================== LOCK ==================
+
+  if (interaction.commandName === "lock") {
+
+    await interaction.channel.permissionOverwrites.edit(
+      interaction.guild.id,
+      {
+        SendMessages: false
+      }
+    );
+
+    return interaction.reply("🔒 Channel locked.");
+  }
+
+  // ================== ROLE ==================
+
+  if (interaction.commandName === "role") {
+
+    return interaction.reply("✅ Role command works.");
+  }
+
+}
 
 // ================== SECURITY ==================
 
