@@ -16,8 +16,25 @@ const BAD_WORDS = [
   "asshole",
   "cunt",
   "dick",
-  "piss"
+  "piss",
+  "nigger",
+  "nigga"
 ];
+
+// cleanup old spam memory every 60 sec (IMPORTANT FIX)
+setInterval(() => {
+  const now = Date.now();
+
+  for (const [userId, timestamps] of userMessages.entries()) {
+    const filtered = timestamps.filter(t => now - t < 5000);
+
+    if (filtered.length === 0) {
+      userMessages.delete(userId);
+    } else {
+      userMessages.set(userId, filtered);
+    }
+  }
+}, 60000);
 
 // ================== WARNING SYSTEM ==================
 
@@ -32,13 +49,19 @@ async function warnUser(message, userId, reason) {
   );
 
   const member = await message.guild.members.fetch(userId).catch(() => null);
-
   if (!member) return;
 
   if (warns >= 3) {
-    await member.timeout(10 * 60 * 1000, "3 warnings reached");
-    userWarnings.set(userId, 0);
-    message.channel.send(`🔨 <@${userId}> timed out for 10 minutes`);
+    try {
+      await member.timeout(10 * 60 * 1000, "3 warnings reached");
+      userWarnings.set(userId, 0);
+
+      message.channel.send(
+        `🔨 <@${userId}> timed out for 10 minutes`
+      );
+    } catch (err) {
+      console.log("TIMEOUT ERROR:", err);
+    }
   }
 }
 
