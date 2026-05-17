@@ -12,10 +12,7 @@ const {
   TextInputStyle,
   Events,
   Partials,
-  ActivityType
-} = require("discord.js");
-
-const {
+  ActivityType,
   REST,
   Routes,
   SlashCommandBuilder
@@ -54,6 +51,34 @@ const WELCOME_CHANNEL_ID = "1481848539406405685";
 const STATS_CHANNEL_ID = "1500123888489599076";
 const CATEGORY_ID = "1481879162141540403";
 
+// ================== SLASH COMMANDS ==================
+
+const commands = [
+
+  new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Replies with pong"),
+
+  new SlashCommandBuilder()
+    .setName("clear")
+    .setDescription("Delete messages")
+    .addIntegerOption(option =>
+      option
+        .setName("amount")
+        .setDescription("Amount")
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("lock")
+    .setDescription("Lock channel"),
+
+  new SlashCommandBuilder()
+    .setName("role")
+    .setDescription("Role command")
+
+].map(command => command.toJSON());
+
 // ================== REACTION ROLES ==================
 
 const REACTION_ROLE_MESSAGE_ID = "1505257411349581865";
@@ -79,6 +104,25 @@ client.once(Events.ClientReady, async () => {
   client.user.setActivity("Cheapest Custom Discord Bots", {
     type: ActivityType.Playing
   });
+
+  // ================== REGISTER SLASH COMMANDS ==================
+
+  try {
+
+    const rest = new REST({ version: "10" })
+      .setToken(process.env.TOKEN);
+
+    await rest.put(
+      Routes.applicationCommands("1497005576645906442"),
+      { body: commands }
+    );
+
+    console.log("✅ Slash commands registered.");
+
+  } catch (err) {
+
+    console.log("SLASH COMMAND ERROR:", err);
+  }
 
   // ================== STATS ==================
 
@@ -177,7 +221,7 @@ Click the button below to create a private purchase ticket.
 
 });
 
-// ================== COMMANDS ==================
+// ================== PREFIX COMMANDS ==================
 
 client.on(Events.MessageCreate, async message => {
 
@@ -195,14 +239,10 @@ client.on(Events.MessageCreate, async message => {
 
     const command = args.shift()?.toLowerCase();
 
-    // ================== PING ==================
-
     if (command === "ping") {
 
       return message.reply("🏓 Pong!");
     }
-
-    // ================== HELP ==================
 
     if (command === "help") {
 
@@ -219,8 +259,6 @@ client.on(Events.MessageCreate, async message => {
         embeds: [embed]
       });
     }
-
-    // ================== STATS ==================
 
     if (command === "stats") {
 
@@ -248,6 +286,7 @@ client.on(Events.MessageCreate, async message => {
     }
 
   } catch (err) {
+
     console.log("COMMAND ERROR:", err);
   }
 
@@ -286,6 +325,7 @@ client.on(Events.GuildMemberAdd, async member => {
     });
 
   } catch (err) {
+
     console.log("WELCOME ERROR:", err);
   }
 
@@ -303,9 +343,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
       await reaction.fetch();
     }
 
-    if (
-      reaction.message.id !== REACTION_ROLE_MESSAGE_ID
-    ) return;
+    if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
 
     const roleId = reactionRoles[reaction.emoji.id];
 
@@ -319,6 +357,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
 
   } catch (err) {
+
     console.log("REACTION ADD ERROR:", err);
   }
 
@@ -336,9 +375,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
       await reaction.fetch();
     }
 
-    if (
-      reaction.message.id !== REACTION_ROLE_MESSAGE_ID
-    ) return;
+    if (reaction.message.id !== REACTION_ROLE_MESSAGE_ID) return;
 
     const roleId = reactionRoles[reaction.emoji.id];
 
@@ -352,6 +389,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
     }
 
   } catch (err) {
+
     console.log("REACTION REMOVE ERROR:", err);
   }
 
@@ -363,11 +401,57 @@ client.on(Events.InteractionCreate, async interaction => {
 
   try {
 
+    // ================== SLASH COMMANDS ==================
+
+    if (interaction.isChatInputCommand()) {
+
+      // ================== PING ==================
+
+      if (interaction.commandName === "ping") {
+
+        return interaction.reply("🏓 Pong!");
+      }
+
+      // ================== CLEAR ==================
+
+      if (interaction.commandName === "clear") {
+
+        const amount = interaction.options.getInteger("amount");
+
+        await interaction.channel.bulkDelete(amount, true);
+
+        return interaction.reply({
+          content: `✅ Deleted ${amount} messages.`,
+          ephemeral: true
+        });
+      }
+
+      // ================== LOCK ==================
+
+      if (interaction.commandName === "lock") {
+
+        await interaction.channel.permissionOverwrites.edit(
+          interaction.guild.id,
+          {
+            SendMessages: false
+          }
+        );
+
+        return interaction.reply("🔒 Channel locked.");
+      }
+
+      // ================== ROLE ==================
+
+      if (interaction.commandName === "role") {
+
+        return interaction.reply("✅ Role command works.");
+      }
+
+    }
+
     // ================== BUTTONS ==================
 
     if (interaction.isButton()) {
-
-      // ================== CREATE TICKET ==================
 
       if (interaction.customId === "create_ticket") {
 
@@ -408,8 +492,6 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.showModal(modal);
       }
 
-      // ================== CLAIM ==================
-
       if (interaction.customId === "claim_ticket") {
 
         const row = new ActionRowBuilder().addComponents(
@@ -436,8 +518,6 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      // ================== CLOSE ==================
-
       if (interaction.customId === "close_ticket") {
 
         await interaction.reply({
@@ -450,6 +530,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         }, 3000);
       }
+
     }
 
     // ================== MODAL ==================
@@ -540,6 +621,7 @@ client.on(Events.InteractionCreate, async interaction => {
           ephemeral: true
         });
       }
+
     }
 
   } catch (err) {
@@ -586,6 +668,7 @@ async function updateCustomerStats() {
     });
 
   } catch (err) {
+
     console.log("STATS ERROR:", err);
   }
 
@@ -600,106 +683,10 @@ process.on("unhandledRejection", err => {
 process.on("uncaughtException", err => {
   console.log("UNCAUGHT EXCEPTION:", err);
 });
-// ================== SLASH COMMAND REGISTER ==================
 
-const commands = [
-
-  new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Replies with pong"),
-
-  new SlashCommandBuilder()
-    .setName("clear")
-    .setDescription("Delete messages")
-    .addIntegerOption(option =>
-      option
-        .setName("amount")
-        .setDescription("Amount")
-        .setRequired(true)
-    ),
-
-  new SlashCommandBuilder()
-    .setName("lock")
-    .setDescription("Lock channel"),
-
-  new SlashCommandBuilder()
-    .setName("role")
-    .setDescription("Give role")
-
-].map(command => command.toJSON());
-
-const rest = new REST({ version: "10" })
-  .setToken(process.env.TOKEN);
-
-(async () => {
-
-  try {
-
-    console.log("🔄 Registering slash commands...");
-
-    await rest.put(
-      Routes.applicationCommands("1497005576645906442"),
-      { body: commands }
-    );
-
-    console.log("✅ Slash commands registered.");
-
-  } catch (err) {
-
-    console.log(err);
-  }
-
-})();
 // ================== LOGIN ==================
 
 client.login(process.env.TOKEN);
-// ================== SLASH COMMANDS ==================
-
-if (interaction.isChatInputCommand()) {
-
-  // ================== PING ==================
-
-  if (interaction.commandName === "ping") {
-
-    return interaction.reply("🏓 Pong!");
-  }
-
-  // ================== CLEAR ==================
-
-  if (interaction.commandName === "clear") {
-
-    const amount = interaction.options.getInteger("amount");
-
-    await interaction.channel.bulkDelete(amount, true);
-
-    return interaction.reply({
-      content: `✅ Deleted ${amount} messages.`,
-      ephemeral: true
-    });
-  }
-
-  // ================== LOCK ==================
-
-  if (interaction.commandName === "lock") {
-
-    await interaction.channel.permissionOverwrites.edit(
-      interaction.guild.id,
-      {
-        SendMessages: false
-      }
-    );
-
-    return interaction.reply("🔒 Channel locked.");
-  }
-
-  // ================== ROLE ==================
-
-  if (interaction.commandName === "role") {
-
-    return interaction.reply("✅ Role command works.");
-  }
-
-}
 
 // ================== SECURITY ==================
 
