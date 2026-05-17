@@ -587,3 +587,4 @@ process.on("uncaughtException", err =>
 // ================== LOGIN ==================
 
 client.login(process.env.TOKEN);
+require("./security")(client);
