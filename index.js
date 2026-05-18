@@ -398,7 +398,17 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
+const OWNER_ROLE_ID = "1481850766049153267";
 
+if (!interaction.isChatInputCommand()) return;
+
+// OWNER ONLY CHECK
+if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
+  return interaction.reply({
+    content: "❌ Only owner can use commands.",
+    ephemeral: true
+  });
+}
   try {
 
     // ================== SLASH COMMANDS ==================
@@ -407,9 +417,9 @@ client.on(Events.InteractionCreate, async interaction => {
 
       // ================== PING ==================
 
-      if (interaction.commandName === "ping") {
+      if (interaction.commandName === "gay") {
 
-        return interaction.reply("🏓 Pong!");
+        return interaction.reply("gayer!");
       }
 
       // ================== CLEAR ==================
