@@ -8,235 +8,317 @@ const {
 
 module.exports = (client) => {
   const SHOP_CHANNEL_ID = "1505281157753995314";
+  const SHOP_IMAGE =
+    "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png?ex=6a0e1f01&is=6a0ccd81&hm=292bc36dfc205c337ad8ce9fa4c214c677b6839f8779918bd699f2f12e044962&";
 
-  // =========================
-  // SERVICES DATABASE
-  // =========================
-  const services = {
-    normal_welcomer: {
-      title: "👋 Normal Welcomer",
-      id: "1506405315543826512",
-      type: "image",
-      media:
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
-      desc: "Basic welcome system for your server.",
-    },
-
-    pro_welcomer: {
-      title: "🔥 PRO Welcomer",
-      id: "1506405499770507387",
-      type: "video",
-      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // replace with your real demo
-      desc: "Advanced welcome system with embeds, roles & customization.",
-    },
-
-    custom_commands: {
-      title: "⚙️ Custom Commands",
-      id: "1506406025597681907",
-      type: "image",
-      media:
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
-      desc: "Custom bot commands made exactly for your server.",
-    },
-
-    pro_wipe: {
-      title: "💥 PRO Wipe Countdown",
-      id: "1501981686353891500",
-      type: "video",
-      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      desc: "Advanced countdown system with live wipe tracking.",
-    },
-
-    normal_wipe: {
-      title: "⏳ Normal Wipe Countdown",
-      id: "1502434930733486200",
-      type: "image",
-      media:
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
-      desc: "Simple wipe countdown system.",
-    },
-
-    dm_welcomer: {
-      title: "📩 DM Welcomer",
-      id: "1505541405874061332",
-      type: "image",
-      media:
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
-      desc: "Sends automatic welcome messages in DM.",
-    },
-
-    security: {
-      title: "🛡️ Security System",
-      id: "1505525021139931176",
-      type: "video",
-      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      desc: "Anti-raid, anti-nuke & full server protection.",
-    },
-
-    ca_leaderboard: {
-      title: "🏆 CA Leaderboard System",
-      id: "1505247151071035522",
-      type: "image",
-      media:
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
-      desc:
-        "Tribe system with stats, credits, ranking system & 5 commands (/register /add /remove /eliminate /winner).",
-    },
-  };
-
-  // =========================
-  // READY PANEL
-  // =========================
+  // =========================================
+  // SEND PANEL AUTOMATICALLY ON STARTUP
+  // =========================================
   client.once(Events.ClientReady, async () => {
-    console.log("✅ Shop System Loaded");
+    console.log("✅ Professional Shop System Loaded");
 
-    const channel = await client.channels.fetch(SHOP_CHANNEL_ID);
+    try {
+      const channel = await client.channels.fetch(SHOP_CHANNEL_ID);
+      if (!channel) return console.log("❌ Shop channel not found");
 
-    const embed = new EmbedBuilder()
-      .setColor("#8b5cf6")
-      .setTitle("🚀 ZYN HUB SHOP")
-      .setDescription(`
-Select a category below.
-
-⚠️ Reminder: These are examples — we can build MUCH better if you request.
-      `)
-      .setImage(
-        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png"
+      // Delete old bot panels
+      const messages = await channel.messages.fetch({ limit: 20 });
+      const botMessages = messages.filter(
+        (m) =>
+          m.author.id === client.user.id &&
+          m.embeds.length > 0
       );
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("main_bots")
-        .setLabel("Main Bots")
-        .setStyle(ButtonStyle.Primary),
+      if (botMessages.size > 0) {
+        await channel.bulkDelete(botMessages, true).catch(() => {});
+      }
 
-      new ButtonBuilder()
-        .setCustomId("systems")
-        .setLabel("Systems")
-        .setStyle(ButtonStyle.Success)
-    );
-
-    await channel.send({ embeds: [embed], components: [row] });
-  });
-
-  // =========================
-  // HELP FUNCTION
-  // =========================
-  const showService = async (interaction, key) => {
-    const s = services[key];
-
-    const embed = new EmbedBuilder()
-      .setColor("#8b5cf6")
-      .setTitle(s.title)
-      .setDescription(`
-📦 ID: ${s.id}
-
-${s.desc}
-
-⚠️ Reminder: these are examples — we can build better if you ask.
-      `)
-      .setFooter({ text: "Zyn Hub • Premium Development" });
-
-    // IMAGE or VIDEO handling
-    if (s.type === "image") {
-      embed.setImage(s.media);
-    } else if (s.type === "video") {
-      embed.setURL(s.media); // makes title clickable video link
-      embed.setDescription(
-        embed.data.description + `\n\n🎬 Preview: ${s.media}`
-      );
-    }
-
-    return interaction.reply({ embeds: [embed], ephemeral: true });
-  };
-
-  // =========================
-  // INTERACTIONS
-  // =========================
-  client.on(Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isButton()) return;
-
-    // MAIN MENU
-    if (interaction.customId === "main_bots") {
+      // Main Panel
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("🤖 MAIN BOT SYSTEMS")
+        .setTitle("🚀 ZYN HUB SERVICES")
         .setDescription(`
-1 Powerful bot = multiple tools
-✔ Less hosting cost
-✔ Faster performance
-✔ All-in-one system
+## Premium Gaming & Discord Services
 
-⚠️ Reminder: examples only — better versions available.
-        `);
+╭・📦 **AVAILABLE SERVICES**
 
-      const row = new ActionRowBuilder().addComponents(
+┆ 🤖 **Discord Custom Bots**
+
+┆ 🦖 **ARK Discord Systems**
+
+┆ ⛏️ **Minecraft Systems**
+
+┆ 🖥️ **Discord Bot Hosting**
+╰────────────
+
+╭・🛒 **ORDER INFORMATION**
+
+┆ Open a ticket to order
+
+┆ Tell us what service you want
+
+┆ Fast delivery & setup
+╰────────────
+
+> **Select a category below to view pricing & services**
+        `)
+        .setImage(SHOP_IMAGE)
+        .setThumbnail(client.guilds.cache.first()?.iconURL({ dynamic: true }))
+        .setFooter({
+          text: "Zyn Hub • Premium Services",
+        })
+        .setTimestamp();
+
+      const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("normal_welcomer")
-          .setLabel("Normal Welcomer")
+          .setCustomId("custom_bots")
+          .setLabel("Discord Bots")
+          .setEmoji("🤖")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
-          .setCustomId("pro_welcomer")
-          .setLabel("PRO Welcomer")
+          .setCustomId("ark_bots")
+          .setLabel("ARK Systems")
+          .setEmoji("🦖")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
-          .setCustomId("custom_commands")
-          .setLabel("Custom Commands")
+          .setCustomId("minecraft_bots")
+          .setLabel("Minecraft")
+          .setEmoji("⛏️")
           .setStyle(ButtonStyle.Secondary)
       );
 
-      return interaction.reply({
-        embeds: [embed],
-        components: [row],
-        ephemeral: true,
-      });
-    }
-
-    // SYSTEM MENU
-    if (interaction.customId === "systems") {
-      const embed = new EmbedBuilder()
-        .setColor("#8b5cf6")
-        .setTitle("⚙️ SYSTEMS CATEGORY")
-        .setDescription(`
-Select a system to preview.
-
-⚠️ Reminder: all are examples, we can improve them.
-        `);
-
-      const row = new ActionRowBuilder().addComponents(
+      const row2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("pro_wipe")
-          .setLabel("PRO Wipe")
+          .setCustomId("hosting")
+          .setLabel("Bot Hosting")
+          .setEmoji("🖥️")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
-          .setCustomId("normal_wipe")
-          .setLabel("Normal Wipe")
-          .setStyle(ButtonStyle.Secondary),
-
-        new ButtonBuilder()
-          .setCustomId("dm_welcomer")
-          .setLabel("DM Welcomer")
-          .setStyle(ButtonStyle.Success),
-
-        new ButtonBuilder()
-          .setCustomId("security")
-          .setLabel("Security")
+          .setCustomId("order_now")
+          .setLabel("Order")
+          .setEmoji("🛒")
           .setStyle(ButtonStyle.Danger)
       );
 
+      await channel.send({
+        embeds: [embed],
+        components: [row1, row2],
+      });
+
+      console.log("✅ Shop panel sent automatically");
+    } catch (err) {
+      console.log("❌ Shop panel error:", err);
+    }
+  });
+
+  // =========================================
+  // BUTTON INTERACTIONS
+  // =========================================
+  client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isButton()) return;
+
+    // =========================================
+    // DISCORD BOTS
+    // =========================================
+    if (interaction.customId === "custom_bots") {
+      const embed = new EmbedBuilder()
+        .setColor("#8b5cf6")
+        .setTitle("🤖 DISCORD CUSTOM BOTS")
+        .setDescription(`
+## Custom Discord Development
+
+╭・💰 **PRICING**
+
+┆ Starting Price → \`$10\`
+
+┆ Advanced Systems → \`Up To $60\`
+
+┆ Hosting → \`$5 - $10/month\`
+╰────────────
+
+╭・⚙️ **FEATURES**
+
+┆ ✅ Welcome System
+
+┆ ✅ Auto Moderation
+
+┆ ✅ Ticket System
+
+┆ ✅ Logs & Security
+
+┆ ✅ Verification
+
+┆ ✅ Custom Commands
+
+┆ ✅ Leveling Systems
+
+┆ ✅ Fully Custom Bots
+╰────────────
+
+> Open a ticket to place your order
+        `)
+        .setImage(SHOP_IMAGE)
+        .setFooter({
+          text: "Zyn Hub • Discord Services",
+        });
+
       return interaction.reply({
         embeds: [embed],
-        components: [row],
         ephemeral: true,
       });
     }
 
-    // SERVICE ROUTING
-    if (services[interaction.customId]) {
-      return showService(interaction, interaction.customId);
+    // =========================================
+    // ARK
+    // =========================================
+    if (interaction.customId === "ark_bots") {
+      const embed = new EmbedBuilder()
+        .setColor("#8b5cf6")
+        .setTitle("🦖 ARK DISCORD SYSTEMS")
+        .setDescription(`
+## Professional ARK Systems
+
+╭・💰 **PRICING**
+
+┆ Starting Price → \`$15\`
+
+┆ Advanced Systems → \`Up To $50\`
+╰────────────
+
+╭・⚙️ **SYSTEMS**
+
+┆ ✅ Player Counter
+
+┆ ✅ Server Status
+
+┆ ✅ Verification Bot
+
+┆ ✅ Wipe Countdown
+
+┆ ✅ Logs System
+
+┆ ✅ Crosschat
+
+┆ ✅ Advanced Systems
+
+┆ ✅ Full Setup
+╰────────────
+
+> Open a ticket to place your order
+        `)
+        .setImage(SHOP_IMAGE)
+        .setFooter({
+          text: "Zyn Hub • ARK Services",
+        });
+
+      return interaction.reply({
+        embeds: [embed],
+        ephemeral: true,
+      });
+    }
+
+    // =========================================
+    // MINECRAFT
+    // =========================================
+    if (interaction.customId === "minecraft_bots") {
+      const embed = new EmbedBuilder()
+        .setColor("#8b5cf6")
+        .setTitle("⛏️ MINECRAFT SYSTEMS")
+        .setDescription(`
+## Professional Minecraft Systems
+
+╭・💰 **PRICING**
+
+┆ Starting Price → \`$10\`
+
+┆ Advanced Systems → \`Up To $30\`
+╰────────────
+
+╭・⚙️ **FEATURES**
+
+┆ ✅ Server Status
+
+┆ ✅ Welcome System
+
+┆ ✅ Moderation
+
+┆ ✅ Auto Roles
+
+┆ ✅ Commands
+
+┆ ✅ Full Custom Systems
+
+┆ ✅ Server Integration
+╰────────────
+
+> Open a ticket to place your order
+        `)
+        .setImage(SHOP_IMAGE)
+        .setFooter({
+          text: "Zyn Hub • Minecraft Services",
+        });
+
+      return interaction.reply({
+        embeds: [embed],
+        ephemeral: true,
+      });
+    }
+
+    // =========================================
+    // HOSTING
+    // =========================================
+    if (interaction.customId === "hosting") {
+      const embed = new EmbedBuilder()
+        .setColor("#8b5cf6")
+        .setTitle("🖥️ DISCORD BOT HOSTING")
+        .setDescription(`
+## Reliable Bot Hosting
+
+╭・💰 **PLANS**
+
+┆ Basic → \`$5/month\`
+
+┆ Standard → \`$7/month\`
+
+┆ Premium → \`$12/month\`
+╰────────────
+
+╭・🚀 **INCLUDED**
+
+┆ ✅ Stable Hosting
+
+┆ ✅ Fast Performance
+
+┆ ✅ Reliable Uptime
+
+┆ ✅ Discord Bots Only
+╰────────────
+
+> Open a ticket to place your order
+        `)
+        .setImage(SHOP_IMAGE)
+        .setFooter({
+          text: "Zyn Hub • Hosting",
+        });
+
+      return interaction.reply({
+        embeds: [embed],
+        ephemeral: true,
+      });
+    }
+
+    // =========================================
+    // ORDER BUTTON
+    // =========================================
+    if (interaction.customId === "order_now") {
+      return interaction.reply({
+        content:
+          "🛒 **Open a ticket from the ticket panel and tell us what service you want.**",
+        ephemeral: true,
+      });
     }
   });
 };
