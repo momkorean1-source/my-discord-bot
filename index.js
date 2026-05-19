@@ -685,3 +685,4 @@ client.login(process.env.TOKEN);
 
 require("./security")(client);
 require("./dmwelcome")(client);
+require("./botstats")(client);
