@@ -16,7 +16,8 @@ module.exports = (client) => {
     const GUILD_ID = "1481848532163104940";
     const TOKEN = process.env.TOKEN;
 
-    const BRAND_NAME = "My Bot"; // change this
+    const OWNER_ID = "1481848532163104940";
+    const BRAND_NAME = "My Bot";
     const EMBED_COLOR = 0x7a00ff;
 
     if (!TOKEN) {
@@ -25,7 +26,7 @@ module.exports = (client) => {
     }
 
     // ===============================
-    // SLASH COMMAND
+    // SLASH COMMANDS
     // ===============================
 
     const commands = [
@@ -33,18 +34,23 @@ module.exports = (client) => {
             .setName("text")
             .setDescription("Send a professional embed message")
             .addStringOption(option =>
-                option
-                    .setName("message")
+                option.setName("message")
                     .setDescription("Main embed content")
                     .setRequired(true)
             )
             .addStringOption(option =>
-                option
-                    .setName("title")
+                option.setName("title")
                     .setDescription("Optional embed title")
                     .setRequired(false)
             )
-            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+        // =========================
+        // DELETE COMMAND
+        // =========================
+        new SlashCommandBuilder()
+            .setName("delete")
+            .setDescription("Delete this channel (OWNER ONLY)")
     ].map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: "10" }).setToken(TOKEN);
@@ -58,20 +64,23 @@ module.exports = (client) => {
                 { body: commands }
             );
 
-            console.log("✅ /text command registered.");
+            console.log("✅ Commands registered.");
         } catch (err) {
             console.error("❌ Command register error:", err);
         }
     })();
 
     // ===============================
-    // INTERACTION HANDLER
+    // INTERACTIONS
     // ===============================
 
     client.on("interactionCreate", async (interaction) => {
 
         if (!interaction.isChatInputCommand()) return;
 
+        // =========================
+        // /text command
+        // =========================
         if (interaction.commandName === "text") {
 
             const message = interaction.options.getString("message");
@@ -83,18 +92,43 @@ module.exports = (client) => {
                 .setTimestamp()
                 .setFooter({ text: BRAND_NAME });
 
-            if (title) {
-                embed.setTitle(title);
-            }
+            if (title) embed.setTitle(title);
 
-            await interaction.channel.send({
-                embeds: [embed]
-            });
+            await interaction.channel.send({ embeds: [embed] });
 
-            await interaction.reply({
+            return interaction.reply({
                 content: "✅ Sent.",
                 ephemeral: true
             });
+        }
+
+        // =========================
+        // /delete command
+        // =========================
+        if (interaction.commandName === "delete") {
+
+            // OWNER ONLY CHECK
+            if (interaction.user.id !== OWNER_ID) {
+                return interaction.reply({
+                    content: "❌ You are not allowed to use this command.",
+                    ephemeral: true
+                });
+            }
+
+            // BOT PERMISSION CHECK
+            if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels)) {
+                return interaction.reply({
+                    content: "❌ I don't have permission to delete channels.",
+                    ephemeral: true
+                });
+            }
+
+            await interaction.reply({
+                content: "🗑️ Deleting channel...",
+                ephemeral: true
+            });
+
+            await interaction.channel.delete().catch(() => {});
         }
     });
 };
