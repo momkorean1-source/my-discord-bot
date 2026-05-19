@@ -16,7 +16,7 @@ module.exports = (client) => {
     const GUILD_ID = "1481848532163104940";
     const TOKEN = process.env.TOKEN;
 
-    const OWNER_ID = "1481848532163104940";
+    const OWNER_ID = "1397252809279406191";
     const BRAND_NAME = "My Bot";
     const EMBED_COLOR = 0x7a00ff;
 
