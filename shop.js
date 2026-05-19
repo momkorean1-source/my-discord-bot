@@ -7,210 +7,232 @@ const {
 } = require("discord.js");
 
 module.exports = (client) => {
-
   client.once(Events.ClientReady, async () => {
-    console.log("✅ Shop system loaded.");
+    console.log("✅ Professional Shop System Loaded");
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isButton()) return;
 
     // ==========================
-    // CUSTOM DISCORD BOTS
+    // DISCORD BOTS
     // ==========================
     if (interaction.customId === "custom_bots") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("🤖 Custom Discord Bots")
+        .setTitle("🤖 Premium Discord Bot Development")
         .setDescription(`
-## 💰 Cheap Prices
+> **Professional custom Discord bots built for your community**
 
-** 10$-60$ [ hosting 5$-10$/monthly ]**
-• Welcome System  
-• Auto Moderation  
-• Basic Commands  
-• Tickets  
-• Logs  
-• Verification  
-• Moderation  
-• Custom Commands  
-• Security System  
-• Leveling  
-• Custom Setup  
-• Fully Custom Bot  
-• Everything Included  
-• Fast Support
+╭・💰 **Pricing**
+┆ **Starting Price:** \`$10\`
+┆ **Advanced Systems:** \`Up To $60\`
+┆ **Hosting:** \`$5 - $10/month\`
+╰────────────
 
-✅ Trusted Service  
-✅ Fast Delivery  
-✅ Free Setup
+╭・✨ **Included Features**
+┆ ✅ Welcome System
+┆ ✅ Auto Moderation
+┆ ✅ Tickets & Logs
+┆ ✅ Verification System
+┆ ✅ Security Features
+┆ ✅ Custom Commands
+┆ ✅ Leveling Systems
+┆ ✅ Fully Custom Development
+╰────────────
+
+> ⚡ Fast Delivery  
+> 🛡️ Trusted Service  
+> 🎁 Free Setup Included
         `)
         .setFooter({
-          text: "Open a ticket to order"
+          text: "Open a ticket to place your order",
         });
 
       return interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        ephemeral: true,
       });
     }
 
     // ==========================
-    // ARK DISCORD BOTS
+    // ARK SYSTEMS
     // ==========================
     if (interaction.customId === "ark_bots") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("🦖 ARK Discord Bots")
+        .setTitle("🦖 Premium ARK Discord Systems")
         .setDescription(`
-## 💰 Cheap Prices
+> **Professional ARK integrations for your Discord server**
 
-**15$ - 50$ [ hosting 5$-15$/monthly ]**
-• Player Counter  
-• Server Status  
-• Verification Bot  
-• Wipe Countdown  
-• Logs  
-• Crosschat  
-• Advanced Systems  
-• Full Setup
+╭・💰 **Pricing**
+┆ **Starting Price:** \`$15\`
+┆ **Advanced Systems:** \`Up To $50\`
+╰────────────
 
-✅ Trusted Service  
-✅ Fast Delivery  
-✅ Affordable Prices
+╭・🛠️ **Available Systems**
+┆ ✅ Player Counter
+┆ ✅ Server Status
+┆ ✅ Verification Bot
+┆ ✅ Wipe Countdown
+┆ ✅ Logs System
+┆ ✅ Crosschat
+┆ ✅ Advanced Systems
+┆ ✅ Full Setup Included
+╰────────────
+
+> ⚡ Fast Delivery  
+> 🛡️ Trusted Service  
+> 🎯 Optimized Systems
         `)
         .setFooter({
-          text: "Open a ticket to order"
+          text: "Open a ticket to place your order",
         });
 
       return interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        ephemeral: true,
       });
     }
 
     // ==========================
-    // MINECRAFT BOTS
+    // MINECRAFT
     // ==========================
     if (interaction.customId === "minecraft_bots") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("⛏️ Minecraft Custom Bots")
+        .setTitle("⛏️ Premium Minecraft Discord Systems")
         .setDescription(`
-## 💰 Cheap Prices
+> **Professional Minecraft integrations & custom systems**
 
-**5$-30$ [ hosting 5$-15$/monthly ]**
-• Server Status  
-• Welcome System  
-• Moderation  
-• Auto Roles  
-• Commands  
-• Full Custom Bot  
-• Server Integration
+╭・💰 **Pricing**
+┆ **Starting Price:** \`$5\`
+┆ **Advanced Systems:** \`Up To $30\`
+╰────────────
 
-✅ Trusted Service  
-✅ Fast Delivery  
-✅ Cheap Pricing
+╭・⚙️ **Available Systems**
+┆ ✅ Server Status
+┆ ✅ Welcome System
+┆ ✅ Moderation
+┆ ✅ Auto Roles
+┆ ✅ Commands
+┆ ✅ Full Custom Systems
+┆ ✅ Server Integration
+╰────────────
+
+> ⚡ Fast Delivery  
+> 🛡️ Trusted Service  
+> 💎 Affordable Pricing
         `)
         .setFooter({
-          text: "Open a ticket to order"
+          text: "Open a ticket to place your order",
         });
 
       return interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        ephemeral: true,
       });
     }
 
     // ==========================
-    // HOSTING
+    // DISCORD BOT HOSTING
     // ==========================
     if (interaction.customId === "hosting") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("🖥️ Hosting Plans")
+        .setTitle("🖥️ Discord Bot Hosting")
         .setDescription(`
-## 💰 Hosting Prices
+> **Reliable hosting made only for Discord bots**
 
-**Basic Hosting — $5/month**
-• Good Performance  
-• Stable Hosting  
+╭・💰 **Hosting Plans**
+┆ **Basic Hosting** → \`$5/month\`
+┆ **Standard Hosting** → \`$7/month\`
+┆ **Premium Hosting** → \`$12/month\`
+╰────────────
 
-**Standard Hosting — $7/month**
-• Better Performance  
-• Fast Support  
+╭・🚀 **Hosting Features**
+┆ ✅ Stable Performance
+┆ ✅ 24/7 Uptime
+┆ ✅ Fast Response
+┆ ✅ Reliable Hosting
+┆ ✅ Discord Bots Only
+╰────────────
 
-**Premium Hosting — $12/month**
-• Best Performance  
-• Priority Support
-
-✅ Trusted Hosting  
-✅ Stable Performance
+> ⚡ Optimized Performance  
+> 🛡️ Trusted Hosting
         `)
         .setFooter({
-          text: "Open a ticket to order"
+          text: "Open a ticket to place your order",
         });
 
       return interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        ephemeral: true,
       });
     }
 
     // ==========================
-    // ORDER BUTTON
+    // ORDER
     // ==========================
     if (interaction.customId === "order_now") {
       return interaction.reply({
         content:
-          "🛒 **To order, please open a ticket in the ticket panel and tell us what service you want.**",
+          "🛒 **Ready to order? Open a ticket from the ticket panel and tell us what service you want.**",
         ephemeral: true,
       });
     }
   });
 
   // ==========================
-  // SEND SHOP PANEL COMMAND
+  // !SHOP COMMAND
   // ==========================
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
 
     if (message.content === "!shop") {
-
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle("🛍️ Professional Bot Shop")
+        .setTitle("🚀 Zyn Hub Premium Services")
         .setDescription(`
-Welcome to our **Professional Services Shop**
+> **Professional Custom Services**
 
-🔥 High Quality Services  
-💰 Cheap Prices  
-⚡ Fast Delivery  
-✅ Trusted Service  
+╭・📦 **Available Services**
+┆ 🤖 Discord Bot Development
+┆ 🦖 ARK Discord Systems
+┆ ⛏️ Minecraft Integrations
+┆ 🖥️ Discord Bot Hosting
+╰────────────
 
-Choose a category below:
+╭・✨ **Why Choose Us?**
+┆ ⚡ Fast Delivery
+┆ 🛡️ Trusted Service
+┆ 💰 Affordable Pricing
+┆ 🎁 Free Setup Included
+╰────────────
+
+> **Select a category below to view pricing & services**
         `)
-        .setImage("https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png?ex=6a0e1f01&is=6a0ccd81&hm=292bc36dfc205c337ad8ce9fa4c214c677b6839f8779918bd699f2f12e044962&")
+        .setImage("https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png")
         .setFooter({
-          text: "Trusted • Fast • Cheap"
+          text: "Zyn Hub • Premium Services",
         });
 
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("custom_bots")
-          .setLabel("Custom Bots")
+          .setLabel("Discord Bots")
           .setEmoji("🤖")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
           .setCustomId("ark_bots")
-          .setLabel("ARK Bots")
+          .setLabel("ARK Systems")
           .setEmoji("🦖")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
           .setCustomId("minecraft_bots")
-          .setLabel("Minecraft Bots")
+          .setLabel("Minecraft")
           .setEmoji("⛏️")
           .setStyle(ButtonStyle.Secondary)
       );
@@ -218,7 +240,7 @@ Choose a category below:
       const row2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("hosting")
-          .setLabel("Hosting")
+          .setLabel("Bot Hosting")
           .setEmoji("🖥️")
           .setStyle(ButtonStyle.Primary),
 
@@ -229,9 +251,9 @@ Choose a category below:
           .setStyle(ButtonStyle.Danger)
       );
 
-      message.channel.send({
+      await message.channel.send({
         embeds: [embed],
-        components: [row1, row2]
+        components: [row1, row2],
       });
     }
   });
