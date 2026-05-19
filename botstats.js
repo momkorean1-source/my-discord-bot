@@ -1,6 +1,5 @@
 const {
-  EmbedBuilder,
-  ChannelType
+  EmbedBuilder
 } = require("discord.js");
 
 module.exports = (client) => {
@@ -38,7 +37,7 @@ module.exports = (client) => {
       if (!statsMessage) {
 
         statsMessage = await channel.send({
-          content: "🤖 Initializing enterprise bot monitoring system..."
+          content: "🤖 Initializing enterprise bot service panel..."
         });
       }
 
@@ -50,7 +49,7 @@ module.exports = (client) => {
 
       setInterval(updateBotStats, 30000);
 
-      console.log("✅ Enterprise bot monitor loaded.");
+      console.log("✅ Enterprise bot service monitor loaded.");
 
     } catch (err) {
 
@@ -93,15 +92,15 @@ module.exports = (client) => {
           member.presence.status === "offline"
       );
 
-      // ================== BOT LIST ==================
+      // ================== FORMAT BOT NAMES ==================
 
-      const onlineList = onlineBots.map(
-        bot => `🟢 <@${bot.id}>`
-      ).join("\n");
+      const onlineList = onlineBots.map(bot => {
+        return `🟢 ${bot.user.username}`;
+      }).join("\n");
 
-      const offlineList = offlineBots.map(
-        bot => `⚫ <@${bot.id}>`
-      ).join("\n");
+      const offlineList = offlineBots.map(bot => {
+        return `⚫ ${bot.user.username}`;
+      }).join("\n");
 
       // ================== EMBED ==================
 
@@ -109,38 +108,40 @@ module.exports = (client) => {
 
         .setColor("#6d28d9")
 
-        .setTitle("🤖 ZYN ENTERPRISE BOT NETWORK")
+        .setTitle("🤖 ZYN CUSTOM BOT SERVICES")
 
         .setDescription(`
-🚀 Advanced automation infrastructure currently deployed inside this server.
+🚀 Premium Discord bot solutions currently active inside this server.
 
 ━━━━━━━━━━━━━━━━━━
 
-📡 **SYSTEM OVERVIEW**
+📡 **SERVICE OVERVIEW**
 
 🤖 Total Active Bots: **${bots.size}**
-🟢 Online Systems: **${onlineBots.size}**
-⚫ Offline Systems: **${offlineBots.size}**
+🟢 Online Services: **${onlineBots.size}**
+⚫ Offline Services: **${offlineBots.size}**
 
 ━━━━━━━━━━━━━━━━━━
 
-🟢 **ONLINE SYSTEMS**
+🛠️ **BOTS WE ARE SERVICING**
 
-${onlineList || "No online systems detected."}
+${onlineList || "No active client bots detected."}
 
 ━━━━━━━━━━━━━━━━━━
 
-⚫ **OFFLINE SYSTEMS**
+⚫ **OFFLINE CLIENT BOTS**
 
 ${offlineList || "No offline systems detected."}
 
 ━━━━━━━━━━━━━━━━━━
 
-🛡️ Real-time automated infrastructure monitoring enabled.
+💼 Custom Discord bot development, automation systems, API integrations, dashboards, moderation tools, economy systems, AI bots & advanced infrastructure.
+
+🛡️ Real-time automated monitoring enabled.
         `)
 
         .setFooter({
-          text: `${guild.name} • Enterprise Monitoring Suite`
+          text: `${guild.name} • ZYN Enterprise Services`
         })
 
         .setTimestamp();
