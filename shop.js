@@ -9,65 +9,83 @@ const {
 module.exports = (client) => {
   const SHOP_CHANNEL_ID = "1505281157753995314";
 
-  const SHOP_IMAGE =
-    "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png";
-
   // =========================
-  // SERVICE PREVIEW DATA
+  // SERVICES DATABASE
   // =========================
   const services = {
     normal_welcomer: {
       title: "👋 Normal Welcomer",
       id: "1506405315543826512",
-      media: SHOP_IMAGE,
+      type: "image",
+      media:
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
       desc: "Basic welcome system for your server.",
     },
+
     pro_welcomer: {
       title: "🔥 PRO Welcomer",
       id: "1506405499770507387",
-      media: SHOP_IMAGE,
-      desc: "Advanced welcome system with customization.",
+      type: "video",
+      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // replace with your real demo
+      desc: "Advanced welcome system with embeds, roles & customization.",
     },
+
     custom_commands: {
       title: "⚙️ Custom Commands",
       id: "1506406025597681907",
-      media: SHOP_IMAGE,
-      desc: "Custom bot commands made for your server.",
+      type: "image",
+      media:
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
+      desc: "Custom bot commands made exactly for your server.",
     },
+
     pro_wipe: {
       title: "💥 PRO Wipe Countdown",
       id: "1501981686353891500",
-      media: SHOP_IMAGE,
-      desc: "Advanced wipe countdown system with full setup.",
+      type: "video",
+      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      desc: "Advanced countdown system with live wipe tracking.",
     },
+
     normal_wipe: {
       title: "⏳ Normal Wipe Countdown",
       id: "1502434930733486200",
-      media: SHOP_IMAGE,
+      type: "image",
+      media:
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
       desc: "Simple wipe countdown system.",
     },
+
     dm_welcomer: {
       title: "📩 DM Welcomer",
       id: "1505541405874061332",
-      media: SHOP_IMAGE,
-      desc: "Sends welcome message in DMs automatically.",
+      type: "image",
+      media:
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
+      desc: "Sends automatic welcome messages in DM.",
     },
+
     security: {
       title: "🛡️ Security System",
       id: "1505525021139931176",
-      media: SHOP_IMAGE,
-      desc: "Anti-raid & server protection system.",
+      type: "video",
+      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      desc: "Anti-raid, anti-nuke & full server protection.",
     },
+
     ca_leaderboard: {
       title: "🏆 CA Leaderboard System",
       id: "1505247151071035522",
-      media: SHOP_IMAGE,
-      desc: "Tribe system with stats, credits & ranking.",
+      type: "image",
+      media:
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png",
+      desc:
+        "Tribe system with stats, credits, ranking system & 5 commands (/register /add /remove /eliminate /winner).",
     },
   };
 
   // =========================
-  // START PANEL
+  // READY PANEL
   // =========================
   client.once(Events.ClientReady, async () => {
     console.log("✅ Shop System Loaded");
@@ -78,11 +96,13 @@ module.exports = (client) => {
       .setColor("#8b5cf6")
       .setTitle("🚀 ZYN HUB SHOP")
       .setDescription(`
-Select a category below to view services.
+Select a category below.
 
-⚠️ **Reminder: These are examples. We can do better if you ask for it.**
+⚠️ Reminder: These are examples — we can build MUCH better if you request.
       `)
-      .setImage(SHOP_IMAGE);
+      .setImage(
+        "https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png"
+      );
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -91,41 +111,64 @@ Select a category below to view services.
         .setStyle(ButtonStyle.Primary),
 
       new ButtonBuilder()
-        .setCustomId("discord_bots")
-        .setLabel("Discord Bots")
-        .setStyle(ButtonStyle.Success),
-
-      new ButtonBuilder()
-        .setCustomId("hosting")
-        .setLabel("Hosting")
-        .setStyle(ButtonStyle.Secondary)
+        .setCustomId("systems")
+        .setLabel("Systems")
+        .setStyle(ButtonStyle.Success)
     );
 
     await channel.send({ embeds: [embed], components: [row] });
   });
 
   // =========================
-  // BUTTON HANDLER
+  // HELP FUNCTION
+  // =========================
+  const showService = async (interaction, key) => {
+    const s = services[key];
+
+    const embed = new EmbedBuilder()
+      .setColor("#8b5cf6")
+      .setTitle(s.title)
+      .setDescription(`
+📦 ID: ${s.id}
+
+${s.desc}
+
+⚠️ Reminder: these are examples — we can build better if you ask.
+      `)
+      .setFooter({ text: "Zyn Hub • Premium Development" });
+
+    // IMAGE or VIDEO handling
+    if (s.type === "image") {
+      embed.setImage(s.media);
+    } else if (s.type === "video") {
+      embed.setURL(s.media); // makes title clickable video link
+      embed.setDescription(
+        embed.data.description + `\n\n🎬 Preview: ${s.media}`
+      );
+    }
+
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  };
+
+  // =========================
+  // INTERACTIONS
   // =========================
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isButton()) return;
 
-    // =========================
-    // MAIN BOTS CATEGORY
-    // =========================
+    // MAIN MENU
     if (interaction.customId === "main_bots") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
         .setTitle("🤖 MAIN BOT SYSTEMS")
         .setDescription(`
-1 Bot that has multiple tools
-✔ Good for less hosting
-✔ Cheap & efficient
+1 Powerful bot = multiple tools
+✔ Less hosting cost
+✔ Faster performance
 ✔ All-in-one system
 
-⚠️ Reminder: These are examples. We can build better if you ask for it.
-        `)
-        .setImage(SHOP_IMAGE);
+⚠️ Reminder: examples only — better versions available.
+        `);
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -144,60 +187,56 @@ Select a category below to view services.
           .setStyle(ButtonStyle.Secondary)
       );
 
-      return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+      return interaction.reply({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true,
+      });
     }
 
-    // =========================
-    // SHOW SERVICE PREVIEW FUNCTION
-    // =========================
-    const showService = (key) => {
-      const s = services[key];
-
+    // SYSTEM MENU
+    if (interaction.customId === "systems") {
       const embed = new EmbedBuilder()
         .setColor("#8b5cf6")
-        .setTitle(s.title)
+        .setTitle("⚙️ SYSTEMS CATEGORY")
         .setDescription(`
-📦 ID: ${s.id}
+Select a system to preview.
 
-${s.desc}
+⚠️ Reminder: all are examples, we can improve them.
+        `);
 
-⚠️ Reminder: These are examples. We can do better if you ask for it.
-        `)
-        .setImage(s.media);
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId("pro_wipe")
+          .setLabel("PRO Wipe")
+          .setStyle(ButtonStyle.Primary),
 
-      return interaction.reply({ embeds: [embed], ephemeral: true });
-    };
+        new ButtonBuilder()
+          .setCustomId("normal_wipe")
+          .setLabel("Normal Wipe")
+          .setStyle(ButtonStyle.Secondary),
 
-    // =========================
-    // SERVICE BUTTONS
-    // =========================
-    if (interaction.customId === "normal_welcomer") return showService("normal_welcomer");
-    if (interaction.customId === "pro_welcomer") return showService("pro_welcomer");
-    if (interaction.customId === "custom_commands") return showService("custom_commands");
+        new ButtonBuilder()
+          .setCustomId("dm_welcomer")
+          .setLabel("DM Welcomer")
+          .setStyle(ButtonStyle.Success),
 
-    if (interaction.customId === "pro_wipe") return showService("pro_wipe");
-    if (interaction.customId === "normal_wipe") return showService("normal_wipe");
-    if (interaction.customId === "dm_welcomer") return showService("dm_welcomer");
-    if (interaction.customId === "security") return showService("security");
-    if (interaction.customId === "ca_leaderboard") return showService("ca_leaderboard");
+        new ButtonBuilder()
+          .setCustomId("security")
+          .setLabel("Security")
+          .setStyle(ButtonStyle.Danger)
+      );
 
-    // =========================
-    // HOSTING (simple)
-    // =========================
-    if (interaction.customId === "hosting") {
-      const embed = new EmbedBuilder()
-        .setColor("#8b5cf6")
-        .setTitle("🖥️ BOT HOSTING")
-        .setDescription(`
-✔ $5 - Basic
-✔ $7 - Standard
-✔ $12 - Premium
+      return interaction.reply({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true,
+      });
+    }
 
-⚠️ Reminder: These are examples. We can do better if you ask for it.
-        `)
-        .setImage(SHOP_IMAGE);
-
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+    // SERVICE ROUTING
+    if (services[interaction.customId]) {
+      return showService(interaction, interaction.customId);
     }
   });
 };
