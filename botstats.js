@@ -39,6 +39,7 @@ module.exports = (client) => {
         statsMessage = await channel.send({
           content: "🤖 Initializing enterprise bot service panel..."
         });
+
       }
 
       // ================== FIRST UPDATE ==================
@@ -54,6 +55,7 @@ module.exports = (client) => {
     } catch (err) {
 
       console.log("BOT MONITOR READY ERROR:", err);
+
     }
 
   });
@@ -72,8 +74,11 @@ module.exports = (client) => {
 
       // ================== GET BOTS ==================
 
+      // REMOVE THIS BOT FROM THE LIST
       const bots = guild.members.cache.filter(
-        member => member.user.bot
+        member =>
+          member.user.bot &&
+          member.id !== client.user.id
       );
 
       // ================== ONLINE BOTS ==================
@@ -117,7 +122,7 @@ module.exports = (client) => {
 
 📡 **SERVICE OVERVIEW**
 
-🤖 Total Active Bots: **${bots.size}**
+🤖 Total Client Bots: **${bots.size}**
 🟢 Online Services: **${onlineBots.size}**
 ⚫ Offline Services: **${offlineBots.size}**
 
@@ -156,6 +161,7 @@ ${offlineList || "No offline systems detected."}
     } catch (err) {
 
       console.log("BOT MONITOR UPDATE ERROR:", err);
+
     }
 
   }
