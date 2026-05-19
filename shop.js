@@ -25,24 +25,18 @@ module.exports = (client) => {
         .setDescription(`
 ## 💰 Cheap Prices
 
-**Basic — $5**
+** 10$-60$ [ hosting 5$-10$/monthly ]**
 • Welcome System  
 • Auto Moderation  
 • Basic Commands  
-
-**Standard — $10**
 • Tickets  
 • Logs  
 • Verification  
 • Moderation  
-
-**Premium — $15**
 • Custom Commands  
 • Security System  
 • Leveling  
 • Custom Setup  
-
-**Ultimate — $25+**
 • Fully Custom Bot  
 • Everything Included  
 • Fast Support
@@ -71,16 +65,12 @@ module.exports = (client) => {
         .setDescription(`
 ## 💰 Cheap Prices
 
-**Basic — $4**
+**15$ - 50$ [ hosting 5$-15$/monthly ]**
 • Player Counter  
 • Server Status  
-
-**Standard — $8**
 • Verification Bot  
 • Wipe Countdown  
 • Logs  
-
-**Premium — $12**
 • Crosschat  
 • Advanced Systems  
 • Full Setup
@@ -109,16 +99,12 @@ module.exports = (client) => {
         .setDescription(`
 ## 💰 Cheap Prices
 
-**Basic — $4**
+**5$-30$ [ hosting 5$-15$/monthly ]**
 • Server Status  
 • Welcome System  
-
-**Standard — $8**
 • Moderation  
 • Auto Roles  
 • Commands  
-
-**Premium — $12**
 • Full Custom Bot  
 • Server Integration
 
@@ -146,7 +132,7 @@ module.exports = (client) => {
         .setDescription(`
 ## 💰 Hosting Prices
 
-**Basic Hosting — $3/month**
+**Basic Hosting — $5/month**
 • Good Performance  
 • Stable Hosting  
 
@@ -204,7 +190,7 @@ Welcome to our **Professional Services Shop**
 
 Choose a category below:
         `)
-        .setImage("https://i.imgur.com/V9N2K9T.png")
+        .setImage("https://cdn.discordapp.com/attachments/1505281157753995314/1506399117277003927/zyn_hub.png?ex=6a0e1f01&is=6a0ccd81&hm=292bc36dfc205c337ad8ce9fa4c214c677b6839f8779918bd699f2f12e044962&")
         .setFooter({
           text: "Trusted • Fast • Cheap"
         });
