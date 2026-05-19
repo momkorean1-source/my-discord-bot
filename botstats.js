@@ -23,34 +23,43 @@ module.exports = (client) => {
         return console.log("❌ Bot stats channel not found.");
       }
 
-      // Find old bot message
-      const messages = await channel.messages.fetch({ limit: 10 }).catch(() => null);
+      // ================== FIND OLD MESSAGE ==================
+
+      const messages = await channel.messages.fetch({ limit: 20 }).catch(() => null);
 
       statsMessage = messages?.find(
-        m => m.author.id === client.user.id
+        m =>
+          m.author.id === client.user.id &&
+          m.embeds.length
       );
 
-      // Create if missing
+      // ================== CREATE IF MISSING ==================
+
       if (!statsMessage) {
-        statsMessage = await channel.send("🤖 Loading bot stats...");
+
+        statsMessage = await channel.send({
+          content: "🤖 Initializing enterprise bot monitoring system..."
+        });
       }
 
-      // Update instantly
-      updateBotStats();
+      // ================== FIRST UPDATE ==================
 
-      // Auto update every 30 sec
+      await updateBotStats();
+
+      // ================== AUTO UPDATE ==================
+
       setInterval(updateBotStats, 30000);
 
-      console.log("✅ Bot stats system loaded.");
+      console.log("✅ Enterprise bot monitor loaded.");
 
     } catch (err) {
 
-      console.log("BOT STATS READY ERROR:", err);
+      console.log("BOT MONITOR READY ERROR:", err);
     }
 
   });
 
-  // ================== FUNCTION ==================
+  // ================== UPDATE FUNCTION ==================
 
   async function updateBotStats() {
 
@@ -62,42 +71,81 @@ module.exports = (client) => {
 
       await guild.members.fetch().catch(() => {});
 
-      // Find bots
+      // ================== GET BOTS ==================
+
       const bots = guild.members.cache.filter(
-        m => m.user.bot
+        member => member.user.bot
       );
 
-      // Online bots
+      // ================== ONLINE BOTS ==================
+
       const onlineBots = bots.filter(
-        m =>
-          m.presence &&
-          ["online", "idle", "dnd"].includes(m.presence.status)
+        member =>
+          member.presence &&
+          ["online", "idle", "dnd"].includes(member.presence.status)
       );
 
-      // Mention all bots
-      const botMentions = bots.map(
-        bot => `<@${bot.id}>`
+      // ================== OFFLINE BOTS ==================
+
+      const offlineBots = bots.filter(
+        member =>
+          !member.presence ||
+          member.presence.status === "offline"
+      );
+
+      // ================== BOT LIST ==================
+
+      const onlineList = onlineBots.map(
+        bot => `🟢 <@${bot.id}>`
       ).join("\n");
 
+      const offlineList = offlineBots.map(
+        bot => `⚫ <@${bot.id}>`
+      ).join("\n");
+
+      // ================== EMBED ==================
+
       const embed = new EmbedBuilder()
-        .setColor("#a855f7")
-        .setTitle("🤖 ACTIVE BOT NETWORK")
+
+        .setColor("#6d28d9")
+
+        .setTitle("🤖 ZYN ENTERPRISE BOT NETWORK")
+
         .setDescription(`
-🚀 Professional automation systems currently active inside this server.
+🚀 Advanced automation infrastructure currently deployed inside this server.
 
-━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━
 
-🤖 Total Bots: **${bots.size}**
-🟢 Online Bots: **${onlineBots.size}**
+📡 **SYSTEM OVERVIEW**
 
-━━━━━━━━━━━━━━
+🤖 Total Active Bots: **${bots.size}**
+🟢 Online Systems: **${onlineBots.size}**
+⚫ Offline Systems: **${offlineBots.size}**
 
-${botMentions || "No bots detected."}
+━━━━━━━━━━━━━━━━━━
+
+🟢 **ONLINE SYSTEMS**
+
+${onlineList || "No online systems detected."}
+
+━━━━━━━━━━━━━━━━━━
+
+⚫ **OFFLINE SYSTEMS**
+
+${offlineList || "No offline systems detected."}
+
+━━━━━━━━━━━━━━━━━━
+
+🛡️ Real-time automated infrastructure monitoring enabled.
         `)
+
         .setFooter({
-          text: "Live bot monitoring system"
+          text: `${guild.name} • Enterprise Monitoring Suite`
         })
+
         .setTimestamp();
+
+      // ================== EDIT MESSAGE ==================
 
       await statsMessage.edit({
         content: null,
@@ -106,7 +154,7 @@ ${botMentions || "No bots detected."}
 
     } catch (err) {
 
-      console.log("BOT STATS UPDATE ERROR:", err);
+      console.log("BOT MONITOR UPDATE ERROR:", err);
     }
 
   }
