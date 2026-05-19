@@ -38,17 +38,27 @@ module.exports = (client) => {
 ## Premium Gaming & Discord Services
 
 ╭・📦 **AVAILABLE SERVICES**
+
 ┆ 🤖 Discord Custom Bots
+
 ┆ 🦖 ARK Discord Systems
+
 ┆ ⛏️ Minecraft Systems
+
 ┆ 🖥️ Bot Hosting
+
 ┆ 🛡️ Advanced Systems
+
 ╰────────────
 
 ╭・🛒 **ORDER INFORMATION**
+
 ┆ Open a ticket to order
+
 ┆ Tell us what you want
+
 ┆ Fast delivery & setup
+
 ╰────────────
 
 > Select a category below to continue
@@ -125,19 +135,29 @@ module.exports = (client) => {
 ## Security & Server Systems
 
 ╭・🛡️ **SECURITY SYSTEM**
+
 ┆ Anti-raid protection
+
 ┆ Anti-nuke protection
+
 ┆ Auto moderation
+
 ┆ Join verification
 
 ╭・⏳ **WIPE SYSTEMS**
+
 ┆ Normal Wipe Countdown
+
 ┆ Pro Wipe System (live updates + embeds)
 
 ╭・📊 **SERVER STATS**
+
 ┆ Online members counter
+
 ┆ Boost tracker
+
 ┆ Channel stats
+
 ┆ Game server status
 
 ⚠️ Reminder: All systems are examples — we can build MUCH better versions.
