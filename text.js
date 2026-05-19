@@ -2,7 +2,8 @@ const {
     SlashCommandBuilder,
     PermissionFlagsBits,
     REST,
-    Routes
+    Routes,
+    EmbedBuilder
 } = require("discord.js");
 
 module.exports = (client) => {
@@ -13,85 +14,86 @@ module.exports = (client) => {
 
     const CLIENT_ID = "1497005576645906442";
     const GUILD_ID = "1481848532163104940";
+    const TOKEN = process.env.TOKEN;
+
+    if (!TOKEN) {
+        console.error("❌ Bot token not found in environment variables.");
+        return;
+    }
 
     // ===============================
-    // REGISTER COMMAND
+    // COMMAND SETUP
     // ===============================
 
     const commands = [
-
         new SlashCommandBuilder()
-
             .setName("text")
-
-            .setDescription("Make the bot send a custom embed message")
-
+            .setDescription("Send a custom embed message")
             .addStringOption(option =>
                 option
                     .setName("message")
-                    .setDescription("Message")
+                    .setDescription("The message content for the embed")
                     .setRequired(true)
             )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    ].map(cmd => cmd.toJSON());
 
-            .setDefaultMemberPermissions(
-                PermissionFlagsBits.Administrator
-            )
+    const rest = new REST({ version: "10" }).setToken(TOKEN);
 
-    ].map(command => command.toJSON());
-
-    const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
-
+    // Register slash command
     (async () => {
-
         try {
+            console.log("⏳ Registering slash commands...");
 
             await rest.put(
-                Routes.applicationGuildCommands(
-                    CLIENT_ID,
-                    GUILD_ID
-                ),
+                Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
                 { body: commands }
             );
 
-            console.log("✅ /text command loaded.");
-
-        } catch (err) {
-
-            console.log(err);
-
+            console.log("✅ /text command successfully registered.");
+        } catch (error) {
+            console.error("❌ Failed to register commands:", error);
         }
-
     })();
 
     // ===============================
-    // INTERACTION
+    // INTERACTION HANDLER
     // ===============================
 
-    client.on("interactionCreate", async interaction => {
+    client.on("interactionCreate", async (interaction) => {
+        try {
 
-        if (!interaction.isChatInputCommand()) return;
+            if (!interaction.isChatInputCommand()) return;
 
-        if (interaction.commandName === "text") {
+            if (interaction.commandName === "text") {
 
-            const message =
-                interaction.options.getString("message");
+                const message = interaction.options.getString("message");
 
-            await interaction.reply({
-                content: "✅ Message sent.",
-                ephemeral: true
-            });
+                const embed = new EmbedBuilder()
+                    .setColor(0x7a00ff)
+                    .setDescription(message)
+                    .setFooter({ text: `Sent by ${interaction.user.tag}` })
+                    .setTimestamp();
 
-            await interaction.channel.send({
-                embeds: [
-                    {
-                        color: 0x7a00ff,
-                        description: message
-                    }
-                ]
-            });
+                await interaction.reply({
+                    content: "✅ Message sent successfully.",
+                    ephemeral: true
+                });
 
+                await interaction.channel.send({
+                    embeds: [embed]
+                });
+            }
+
+        } catch (error) {
+            console.error("❌ Interaction error:", error);
+
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: "❌ Something went wrong.",
+                    ephemeral: true
+                });
+            }
         }
-
     });
-
 };
