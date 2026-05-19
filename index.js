@@ -43,6 +43,7 @@ const client = new Client({
 
 const PREFIX = "!";
 
+const OWNER_ROLE_ID = "1481850766049153267";
 const PANEL_CHANNEL_ID = "1481879215812116571";
 const STAFF_ROLE_ID = "1481850766049153267";
 const MEMBER_ROLE_ID = "1481859617721155594";
@@ -54,7 +55,6 @@ const CATEGORY_ID = "1481879162141540403";
 // ================== SLASH COMMANDS ==================
 
 const commands = [
-
   new SlashCommandBuilder()
     .setName("ping")
     .setDescription("Replies with pong"),
@@ -240,7 +240,6 @@ client.on(Events.MessageCreate, async message => {
     const command = args.shift()?.toLowerCase();
 
     if (command === "ping") {
-
       return message.reply("🏓 Pong!");
     }
 
@@ -398,31 +397,23 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 // ================== INTERACTIONS ==================
 
 client.on(Events.InteractionCreate, async interaction => {
-const OWNER_ROLE_ID = "1481850766049153267";
 
-if (!interaction.isChatInputCommand()) return;
-
-// OWNER ONLY CHECK
-if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
-  return interaction.reply({
-    content: "❌ Only owner can use commands.",
-    ephemeral: true
-  });
-}
   try {
 
     // ================== SLASH COMMANDS ==================
 
     if (interaction.isChatInputCommand()) {
 
-      // ================== PING ==================
-
-      if (interaction.commandName === "gay") {
-
-        return interaction.reply("gayer!");
+      if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
+        return interaction.reply({
+          content: "❌ Only owner can use commands.",
+          ephemeral: true
+        });
       }
 
-      // ================== CLEAR ==================
+      if (interaction.commandName === "ping") {
+        return interaction.reply("🏓 Pong!");
+      }
 
       if (interaction.commandName === "clear") {
 
@@ -436,8 +427,6 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
         });
       }
 
-      // ================== LOCK ==================
-
       if (interaction.commandName === "lock") {
 
         await interaction.channel.permissionOverwrites.edit(
@@ -450,13 +439,9 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
         return interaction.reply("🔒 Channel locked.");
       }
 
-      // ================== ROLE ==================
-
       if (interaction.commandName === "role") {
-
         return interaction.reply("✅ Role command works.");
       }
-
     }
 
     // ================== BUTTONS ==================
@@ -466,8 +451,7 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
       if (interaction.customId === "create_ticket") {
 
         const existing = interaction.guild.channels.cache.find(
-          c =>
-            c.name === `ticket-${interaction.user.username.toLowerCase()}`
+          c => c.name === `ticket-${interaction.user.username.toLowerCase()}`
         );
 
         if (existing) {
@@ -540,10 +524,9 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
 
         }, 3000);
       }
-
     }
 
-    // ================== MODAL ==================
+    // ================== MODALS ==================
 
     if (interaction.isModalSubmit()) {
 
@@ -555,13 +538,14 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
         const description =
           interaction.fields.getTextInputValue("description");
 
+        const cleanName = interaction.user.username
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .slice(0, 15);
+
         const channel = await interaction.guild.channels.create({
 
-          name:
-            `ticket-${interaction.user.username}`
-              .toLowerCase()
-              .replace(/[^a-z0-9-]/g, "")
-              .slice(0, 20),
+          name: `ticket-${cleanName}`,
 
           type: ChannelType.GuildText,
 
@@ -631,7 +615,6 @@ if (!interaction.member.roles.cache.has(OWNER_ROLE_ID)) {
           ephemeral: true
         });
       }
-
     }
 
   } catch (err) {
