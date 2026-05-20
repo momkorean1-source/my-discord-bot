@@ -13,9 +13,14 @@ const {
 
 module.exports = (client) => {
 
+  // ================== CONFIG ==================
   const PANEL_CHANNEL_ID = "1481879215812116571";
   const STAFF_LOG_CHANNEL = "1481850766049153267";
+  const TICKET_CATEGORY_ID = "1481879162141540403"; // optional
+  const STAFF_ROLE_ID = "1481850766049153267";
+  // ============================================
 
+  // Hidden discount codes (not shown anywhere)
   const discountCodes = {
     HRN: 15,
     Neon: 20,
@@ -23,44 +28,47 @@ module.exports = (client) => {
   };
 
   const activeDiscounts = new Map();
+  const openOrders = new Map();
 
   function generateOrderID() {
-    return Math.floor(10000 + Math.random() * 90000);
+    return Math.floor(100000 + Math.random() * 900000);
   }
 
   client.on(Events.InteractionCreate, async interaction => {
 
-    // ===== /panel =====
+    // ================= /PANEL =================
     if (interaction.isChatInputCommand() && interaction.commandName === 'panel') {
 
       if (interaction.channel.id !== PANEL_CHANNEL_ID)
-        return interaction.reply({ content: "Wrong channel.", ephemeral: true });
+        return interaction.reply({ content: "❌ Use this in the shop channel only.", ephemeral: true });
 
       const embed = new EmbedBuilder()
-        .setColor("#2b2d31")
-        .setTitle("💎 ZYN SHOP SYSTEM")
+        .setColor("#111214")
+        .setTitle("💎 ZYN ELITE ORDER SYSTEM")
         .setDescription(`
-━━━━━━━━━━━━━━━━━━
-🔥 Premium Custom Discord Bots
-⚡ Fast Delivery
-🛡 Secure Systems
-━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Premium Custom Discord Bots
+⚡ Fast & Secure Development
+🛡 Advanced Protection Systems
+🎨 Fully Custom Designs
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Click below to create your order.
-        `);
+Click the button below to start your order.
+        `)
+        .setFooter({ text: "Professional • Secure • Trusted" });
 
       const button = new ButtonBuilder()
         .setCustomId('create_order')
-        .setLabel('🛒 Create Order')
+        .setLabel('🛒 Start Order')
         .setStyle(ButtonStyle.Success);
 
       const row = new ActionRowBuilder().addComponents(button);
 
       await interaction.channel.send({ embeds: [embed], components: [row] });
-      return interaction.reply({ content: "Panel sent.", ephemeral: true });
+      return interaction.reply({ content: "✅ Panel deployed.", ephemeral: true });
     }
 
-    // ===== /usecode =====
+    // ================= /USECODE =================
     if (interaction.isChatInputCommand() && interaction.commandName === 'usecode') {
 
       const code = interaction.options.getString('code');
@@ -68,27 +76,33 @@ Click below to create your order.
       if (discountCodes[code]) {
         activeDiscounts.set(interaction.user.id, discountCodes[code]);
         return interaction.reply({
-          content: "✅ Discount code applied successfully.",
+          content: "✅ Discount successfully applied to your next order.",
           ephemeral: true
         });
       } else {
         return interaction.reply({
-          content: "❌ Invalid code.",
+          content: "❌ Invalid discount code.",
           ephemeral: true
         });
       }
     }
 
-    // ===== CREATE ORDER BUTTON =====
+    // ================= CREATE ORDER BUTTON =================
     if (interaction.isButton() && interaction.customId === 'create_order') {
+
+      if (openOrders.has(interaction.user.id))
+        return interaction.reply({
+          content: "❌ You already have an open order.",
+          ephemeral: true
+        });
 
       const modal = new ModalBuilder()
         .setCustomId('order_modal')
-        .setTitle('Create Your Order');
+        .setTitle('Create Your Elite Order');
 
       const product = new TextInputBuilder()
         .setCustomId('product')
-        .setLabel("What do you want to buy?")
+        .setLabel("What service do you need?")
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
@@ -100,7 +114,7 @@ Click below to create your order.
 
       const details = new TextInputBuilder()
         .setCustomId('details')
-        .setLabel("Extra Details")
+        .setLabel("Describe your request")
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -113,7 +127,7 @@ Click below to create your order.
       return interaction.showModal(modal);
     }
 
-    // ===== MODAL SUBMIT =====
+    // ================= MODAL SUBMIT =================
     if (interaction.isModalSubmit() && interaction.customId === 'order_modal') {
 
       const product = interaction.fields.getTextInputValue('product');
@@ -126,6 +140,7 @@ Click below to create your order.
       const channel = await interaction.guild.channels.create({
         name: `order-${orderID}`,
         type: ChannelType.GuildText,
+        parent: TICKET_CATEGORY_ID || null,
         permissionOverwrites: [
           {
             id: interaction.guild.roles.everyone,
@@ -133,46 +148,69 @@ Click below to create your order.
           },
           {
             id: interaction.user.id,
-            allow: [PermissionsBitField.Flags.ViewChannel]
+            allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
+          },
+          {
+            id: STAFF_ROLE_ID,
+            allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
           }
         ]
       });
 
+      openOrders.set(interaction.user.id, channel.id);
+
       const embed = new EmbedBuilder()
-        .setColor("Green")
+        .setColor("#00ff99")
         .setTitle(`🧾 Order #${orderID}`)
         .setDescription(`
 👤 Client: <@${interaction.user.id}>
-📦 Product: ${product}
+📦 Service: ${product}
 💰 Budget: ${budget}
-🎟 Discount: ${discount}%
+🎟 Discount Applied: ${discount}%
 
-📝 Details:
+━━━━━━━━━━━━━━━━━━
+📝 Order Details:
 ${details}
-        `);
+        `)
+        .setFooter({ text: "Awaiting Staff Review" });
 
       const closeBtn = new ButtonBuilder()
-        .setCustomId(`close_${orderID}`)
+        .setCustomId(`close_${interaction.user.id}`)
         .setLabel("🔒 Close Order")
         .setStyle(ButtonStyle.Danger);
 
       await channel.send({
+        content: `<@${interaction.user.id}> <@&${STAFF_ROLE_ID}>`,
         embeds: [embed],
         components: [new ActionRowBuilder().addComponents(closeBtn)]
       });
 
+      const logChannel = interaction.guild.channels.cache.get(STAFF_LOG_CHANNEL);
+      if (logChannel) logChannel.send({ embeds: [embed] });
+
       activeDiscounts.delete(interaction.user.id);
 
       return interaction.reply({
-        content: `✅ Your order has been created: ${channel}`,
+        content: `✅ Your private order has been created: ${channel}`,
         ephemeral: true
       });
     }
 
-    // ===== CLOSE BUTTON =====
+    // ================= CLOSE ORDER =================
     if (interaction.isButton() && interaction.customId.startsWith("close_")) {
-      await interaction.reply({ content: "Order closed.", ephemeral: true });
-      setTimeout(() => interaction.channel.delete(), 3000);
+
+      if (!interaction.member.roles.cache.has(STAFF_ROLE_ID))
+        return interaction.reply({ content: "❌ Staff only.", ephemeral: true });
+
+      const userId = interaction.customId.split("_")[1];
+
+      openOrders.delete(userId);
+
+      await interaction.reply({ content: "🔒 Closing order in 3 seconds..." });
+
+      setTimeout(() => {
+        interaction.channel.delete().catch(() => {});
+      }, 3000);
     }
 
   });
