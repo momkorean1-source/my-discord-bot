@@ -14,7 +14,7 @@ const {
 module.exports = (client) => {
 
   const PANEL_CHANNEL_ID = "1481879215812116571";
-  const STAFF_LOG_CHANNEL = "PUT_STAFF_CHANNEL_ID_HERE";
+  const STAFF_LOG_CHANNEL = "1481850766049153267";
 
   const discountCodes = {
     HRN: 15,
