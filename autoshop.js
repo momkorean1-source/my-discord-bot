@@ -14,7 +14,7 @@ const {
 module.exports = (client) => {
 
   // ================== CONFIG ==================
-  const PANEL_CHANNEL_ID = "1481879215812116571";
+  const PANEL_CHANNEL_ID = "1481873439257133177";
   const STAFF_LOG_CHANNEL = "1481850766049153267";
   const TICKET_CATEGORY_ID = "1481879162141540403"; // optional
   const STAFF_ROLE_ID = "1481850766049153267";
