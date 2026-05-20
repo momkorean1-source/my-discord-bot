@@ -688,3 +688,4 @@ require("./dmwelcome")(client);
 require("./botstats")(client);
 require("./text")(client);
 require("./shop")(client);
+require("./autoshop")(client);
